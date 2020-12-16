@@ -85,7 +85,7 @@ output:
 
 --
 
-2. análise dos dados em questão, nomeadamente quais as variáveis que podem influenciar o problema e a sua descrição.
+2. análise dos dados em questão, nomeadamente quais as variáveis que podem influenciar o problema.
 
 --
 
@@ -104,30 +104,40 @@ output:
 
 # Business Understanding
 
-Nos últmos anos assistimos a um aumento de canais de  venda online , sendo o Booking.com a maior no mercado  de agências de viagens online europeias (OTA), com uma  participação de mercado de 67,7% em 2019.
+Nos últmos anos assistimos a um aumento de canais de venda online , o que mudou a natureza das reservas de viagens. Estas agências foram responsaveis por mais de um quarto das reservas na Europa, sendo o Booking.com a maior no mercado, com uma  participação de mercado de 67,7%.
 
 --
 
-Existem vários fatores econômicos determinantes  para a escolha de um quarto. O objetivo do hotel, ao  determinar os preços dos quartos é atingir um  equilíbrio para maximizar o lucro
+A teoria de preços hedónicos (Lancaster, 1966; Rosen, 1974) diz que o preço de um  produto pode ser considerado uma função das  suas características que afetam a utilidade  para o consumidor. Cada vez mais existem modelos hedônicos aplicados a vários bens de consumo, nomeadamente na indústria de habitação e hotelaria.
+
 
 --
 
-A teoria de preços hedónicos (Lancaster, 1966; Rosen, 1974) diz que o preço de um  produto pode ser considerado uma função das  suas características que afetam a utilidade  para o consumidor
 
+Existem vários fatores económicos determinantes  para a escolha de um quarto. O objetivo do hotel, ao  determinar os preços dos quartos é atingir um  equilíbrio para maximizar o lucro:
+
+- Preços mais altos para atrair consumidores de luxo
+- Preços mais baixos para atrair consumidores "normais"
 
 ---
 
 # Business Understanding
 
-Existem vários fatores que podem  influenciar o preço de um quarto  de hotel:
+De acordo com a teoria de preços hedonicos, qualquer característica única, ou combinação de características, que sejam fortemente significativas para pelo menos um conjunto de consumidores podem ser usadas como base para determinação dos preços de um hotel:
 - a localização do hotel,
-- as comodidades nos quartos  do hotel,
-- a disponibilidade de
-- restaurantes perto do hotel,  a disponibilidade de  estacionamento,
-- a reputação do
-- estabelecimento,
+- tipo de quarto,
+- restaurantes perto do hotel,
+- a reputação do estabelecimento,
 - os níveis de limpeza e  segurança
 - ...
+
+--
+
+De facto, a segurança é uma das principais prioridades quando os turistas reservam as suas viagens, logo o terrorismo e as crises epidêmicas têm um efeito bastante negativo sob preço.
+
+--
+
+A sazonalidade também é um fator bastante importante no que toca a oscilações de precos, assom como a diferença entre dias de semana e fins de semana, feriados e dias “especiais”. Para além das épocas de saldos e dias como a Black Friday onde se verifica uma grande redução dos preços. 
 
 
 ---
@@ -146,21 +156,29 @@ Em 2016, este setor contribuiu com 198,3 bilhões de euros para a  economia fran
 
 Em 2018, França contou com um total de 89,4 milhões de visitantes  (aumentou 3% em relação a 2017), sendo que Paris teve mais de 40 milhões  de visitantes. Em 2018 o país tinha como meta, 100 milhões de turistas  estrangeiros  em 2020.
 
+---
+
+# Business Understanding
+
+## Paris
+
+Com todas as consequências e restrições que o covid19 trouxe, esta meta não foi alcançada. Depois de uma primavera bastante dolorosa, o país “recuperou” no verão graças a uma queda no número de turistas menor do que o esperado, ainda que o período foi marcado pela ausência de turistas internacionais.
+
 --
 
-Na última década França sofreu vários ataques terroristas o que não é  favorável ao turismo. Mais grave está a ser o período de pandemia.De  acordo com um relatório da ADN Tourisme, apenas 53% dos residentes  franceses foram de férias em julho e agosto, em comparação com 71% em  2019. Mas 94% dos que viajaram foi dentro do próprio país, dando um  impulso ao setor do turismo. O estudo constatou que os turistas franceses  optam cada vez mais por casas de aluguer de temporada, que oferecem  maior privacidade e parecem mais seguras em termos de saneamento. Hotéis  e acampamentos com instalações compartilhadas foram menos populares.
+De acordo com um relatório da ADN Tourisme, apenas 53% dos residentes franceses foram de férias de verão, em comparação com 71% em 2019. Mas 94% dos que viajaram foi dentro do próprio país, dando um impulso ao setor do turismo. O estudo constatou que os turistas franceses optam cada vez mais por casas de aluguer de temporada, que oferecem maior privacidade e parecem mais seguras em termos de saneamento do que hotéis e acampamentos com instalações compartilhadas.
 
 ---
 
 # Data Understanding
 
-Foi utilizado um conjunto de dados que  consiste no preço de cada hotel em  Paris e uma série de características.
-
-A informação corresponde a uma  estadia normal de uma noite para duas  pessoas.
-
 Como o período em causa é tão  invulgar serão apenas analisados dados  atuais, não tendo em conta dados  temporais como a sazonalidade.
 
 Os dados utilizados para a realização  deste modelo são retirados do site da  booking.com. Uma vez que este não é o  site oficial de cada hotel, podem existir  descontos e promoções oferecidas  exclusivamente nesta plataforma.
+
+A informação corresponde a uma  estadia normal de uma noite para duas  pessoas.
+
+Foi utilizado um conjunto de dados que  consiste no preço de cada hotel em  Paris e uma série de características.
 
 ---
 
@@ -189,9 +207,17 @@ Preditores potenciais:
 
 Um estudo feito sobre os preços de  quartos de hotel em Paris, baseado na abordagem hedónica de preços  (Meahan, 2016), mostrou que a  classificação por estrelas e a  classificação do hotel desempenhavam  um papel fundamental na determinação  dos preços dos quartos, ou seja, quanto  maior estes atributos, maior será o  preço do quarto.
 
+--
+
 O estudo também mostrou que hotéis  mais afastados do centro de Paris estão  associados a preços mais baixos e que o  pequeno almoço incluído aumenta o  preço dos hotéis.
 
+--
+
 Para além disso, as avaliações dos  usuários online têm impactos positivos  nos preços dos hotéis (Wang, X., Sun,  J., & Wen, H. 2019).
+
+--
+
+Em relação às características “restam x quartos para reserva” e “cancelamento gratuito”, não foram encontrados nenhuns estudos relativos ao impacto destas, o que pode ser explicado por serem características do site e não do hotel em si.
 
 ---
 

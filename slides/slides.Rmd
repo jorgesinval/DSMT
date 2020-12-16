@@ -197,8 +197,26 @@ Para além disso, as avaliações dos  usuários online têm impactos positivos 
 
 # Web Scraping
 
-```{r}
-df <- readRDS(file = "~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+```{r echo=F}
+df <- readRDS(file = "~/MSc in Data Science/DSMT/df_all.rds")
+```
+
+```{r eval=F}
+#carregar pacote para fazer o webscraping
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,
+              corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
+
+{{city_code_booking <- "-1456928"}} #Paris
+
+{{"dia checkin"}}
+checkin_day <- 16
+checkin_month <- 4
+checkin_year <- 2021
+{{"dia checkout"}}
+checkout_day <- 17
+checkout_month <- 4
+checkout_year <- 2021
 ```
 
 
@@ -522,7 +540,7 @@ xaringanExtra::style_panelset(panel_tab_color_active = "red")
 
 ```{r panel-chunk, fig.show='hide', fig.align = "center", fig.dim=c(5, 3),fig.retina=3, out.width="100%", message=F,warning=F}
 pacman::p_load(ggstatsplot,magrittr)
-df <- readRDS("~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+df <- readRDS("~/MSc in Data Science/DSMT/df_all.rds")
 reg_m <- lm(formula = price_eur ~ dist_center_km + score + n_reviews + breakfast + free_cancelation + n_rooms_left + n_stars,data = df)
 ggcoefstats(x = reg_m)
 ```

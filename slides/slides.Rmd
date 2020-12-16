@@ -327,7 +327,7 @@ Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
 
 Forma genérica das nodes a extrair:
 
-```{r eval =F}
+```{r}
 page <- url %>% read_html()
 
 elem_list <- page %>%
@@ -351,10 +351,14 @@ elem_list <- page %>%
 
 ## Inspeção do HTML
 
-```{r}
+.scroll-output[
 
+```{r echo=F}
+raw_text      <- elem_list %>% html_text(trim=T)
+raw_text
 ```
 
+]
 
 ---
 

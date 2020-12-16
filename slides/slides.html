@@ -210,7 +210,8 @@ Para além disso, as avaliações dos  usuários online têm impactos positivos 
 ```r
 #carregar pacote para fazer o webscraping
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
+pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,
+              corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
 
 {{city_code_booking &lt;- "-1456928"}} #Paris
 
@@ -224,6 +225,7 @@ checkout_month &lt;- 4
 checkout_year &lt;- 2021
 ```
 
+Extração dos dados em tranches de 25 observações, sendo que se utilizou a ordem crecente de distância ao centro sendo que é um indicador que manterá a ordem das observações estável (ao contrário de outras variáveis dinâmicas como o preço).
 
 ---
 

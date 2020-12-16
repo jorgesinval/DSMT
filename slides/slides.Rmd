@@ -219,6 +219,7 @@ checkout_month <- 4
 checkout_year <- 2021
 ```
 
+Extração dos dados em tranches de 25 observações, sendo que se utilizou a ordem crecente de distância ao centro sendo que é um indicador que manterá a ordem das observações estável (ao contrário de outras variáveis dinâmicas como o preço).
 
 ---
 

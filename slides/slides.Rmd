@@ -415,28 +415,9 @@ str(df)
 
 # Data Preparation
 
-<img src="https://i.imgur.com/xSakJ5D.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+<img src="https://i.imgur.com/7Cti11Q.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 60%></img>
 
----
-
-# Data Preparation
-
-<img src="https://i.imgur.com/EC6PKDl.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
-
-
----
-
-# Data Preparation
-
-<img src="https://i.imgur.com/hIBc8kI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
-
----
-
-# Data Preparation
-
-<img src="https://i.imgur.com/Em3kzyN.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
-
-- Base ao final da etapa de pré-processamento: **1556** propriedades
+Base ao final da etapa de pré-processamento: **1556** propriedades
 
 ---
 
@@ -672,54 +653,6 @@ A árvore definiu como principal variável  explicativa dos preços dos hotéis 
 
 ---
 
-# Investigação atual
-
-```{r xaringan-panelset, echo=FALSE, message=F,warning=F}
-xaringanExtra::use_panelset()
-xaringanExtra::style_panelset(panel_tab_color_active = "red")
-```
-
-.panelset[
-.panel[.panel-name[R Code]
-
-```{r panel-chunk, fig.show='hide', fig.align = "center", fig.dim=c(5, 3),fig.retina=3, out.width="100%", message=F,warning=F}
-pacman::p_load(ggstatsplot,magrittr)
-df <- readRDS("~/MSc in Data Science/DSMT/df_all.rds")
-reg_m <- lm(formula = price_eur ~ dist_center_km + score + n_reviews + breakfast + free_cancelation + n_rooms_left + n_stars,data = df)
-ggcoefstats(x = reg_m)
-```
-]
-
-.panel[.panel-name[Output]
-.center[
-![](`r knitr::fig_chunk("panel-chunk", ".png")`)
-]
-]
-
-.panel[.panel-name[Análise Estatística]
-```{r xaringan-tachyons_t_test_stat_analysis, echo=FALSE, message=F,warning=F}
-xaringanExtra::use_tachyons()
-```
-
-.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
-
-Modelos preditivos.
-
-]
-
-.panel[.panel-name[Resultados]
-```{r xaringan-tachyons_t_test_results, echo=FALSE, message=F,warning=F}
-xaringanExtra::use_tachyons()
-```
-
-
-
-.tr[`r emo::ji("scroll")` refs... ]
-
-]]]
-
----
-
 # Avaliação dos resultados
 
 - Detalhamento das informações extraídas a partir do scraping e, eventualmente, a obtenção de variáveis preditoras;
@@ -767,7 +700,7 @@ xaringanExtra::use_tachyons()
   - Técnicas supervisionadas ou não supervisionadas, para a identificação e classificação (tipo de propriedade) consoante as mesmas variáveis obtidas.
 
 - Impacto causado pela crise do COVID-19 na economia de forma geral e, em especial, no setor do turismo.
-  - Incerteza e instabilidade dos preços. 
+  - Incerteza e instabilidade dos preços.
   - Possibilidade de restrições
 
 - Importância do fator sazonalidade nas oscilações dos preços no setor do turismo / Dados longitudinais;

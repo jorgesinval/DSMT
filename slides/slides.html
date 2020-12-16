@@ -7,9 +7,6 @@
     <meta name="date" content="2020-12-16" />
     <script src="slides_files/header-attrs/header-attrs.js"></script>
     <link href="slides_files/remark-css/default.css" rel="stylesheet" />
-    <link href="slides_files/panelset/panelset.css" rel="stylesheet" />
-    <script src="slides_files/panelset/panelset.js"></script>
-    <link href="slides_files/tachyons/tachyons.min.css" rel="stylesheet" />
     <link href="slides_files/tile-view/tile-view.css" rel="stylesheet" />
     <script src="slides_files/tile-view/tile-view.js"></script>
     <link rel="stylesheet" href="css/metropolis.css" type="text/css" />
@@ -573,28 +570,9 @@ Ex.: `df_temp[!is.na(df_temp$dist_center_km == "NA"),]`
 
 # Data Preparation
 
-&lt;img src="https://i.imgur.com/xSakJ5D.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+&lt;img src="https://i.imgur.com/7Cti11Q.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 60%&gt;&lt;/img&gt;
 
----
-
-# Data Preparation
-
-&lt;img src="https://i.imgur.com/EC6PKDl.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
-
-
----
-
-# Data Preparation
-
-&lt;img src="https://i.imgur.com/hIBc8kI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
-
----
-
-# Data Preparation
-
-&lt;img src="https://i.imgur.com/Em3kzyN.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
-
-- Base ao final da etapa de pré-processamento: **1556** propriedades
+Base ao final da etapa de pré-processamento: **1556** propriedades
 
 ---
 
@@ -830,48 +808,6 @@ A árvore definiu como principal variável  explicativa dos preços dos hotéis 
 
 ---
 
-# Investigação atual
-
-
-
-.panelset[
-.panel[.panel-name[R Code]
-
-
-```r
-pacman::p_load(ggstatsplot,magrittr)
-df &lt;- readRDS("~/MSc in Data Science/DSMT/df_all.rds")
-reg_m &lt;- lm(formula = price_eur ~ dist_center_km + score + n_reviews + breakfast + free_cancelation + n_rooms_left + n_stars,data = df)
-ggcoefstats(x = reg_m)
-```
-]
-
-.panel[.panel-name[Output]
-.center[
-![](slides_files/figure-html/panel-chunk-1.png)
-]
-]
-
-.panel[.panel-name[Análise Estatística]
-
-
-.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
-
-Modelos preditivos.
-
-]
-
-.panel[.panel-name[Resultados]
-
-
-
-
-.tr[📜 refs... ]
-
-]]]
-
----
-
 # Avaliação dos resultados
 
 - Detalhamento das informações extraídas a partir do scraping e, eventualmente, a obtenção de variáveis preditoras;
@@ -919,7 +855,7 @@ Modelos preditivos.
   - Técnicas supervisionadas ou não supervisionadas, para a identificação e classificação (tipo de propriedade) consoante as mesmas variáveis obtidas.
 
 - Impacto causado pela crise do COVID-19 na economia de forma geral e, em especial, no setor do turismo.
-  - Incerteza e instabilidade dos preços. 
+  - Incerteza e instabilidade dos preços.
   - Possibilidade de restrições
 
 - Importância do fator sazonalidade nas oscilações dos preços no setor do turismo / Dados longitudinais;

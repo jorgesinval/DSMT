@@ -1,0 +1,843 @@
+---
+title: "Trabalho de grupo"
+author: "Ana, Felipe, Jorge"
+date: "10/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Os alunos têm de desenvolver um modelo que permita estimar o preço a que os quartos são colocados no Booking.com à venda**
+
+## Compreensão do problema
+
+Previsão dos preços em reservas em hotéis em Paris.
+
+### Variáveis a retirar
+
+Score médio de review de hóspedes
+
+Preço quarto 1 noite, 2 pessoas (o default que surge na paginação do Booking)
+
+Distância ao centro da cidade
+
+Se é com pequeno almoço incluído
+
+N.º de estrelas
+
+N.º de reviews já escritas por hóspedes
+
+Se tem indicação ou não de que "só restam N quartos para reserva no Booking"
+
+Cancelamento gratuito? Y/N
+
+### Extração
+
+Extração dos dados em tranches de 25 observações, sendo que se utilizou a ordem crecente de distância ao centro sendo que é um indicador que manterá a ordem das observações estável (ao contrário de outras variáveis dinâmicas como o preço).
+
+#### Acomodações por nível de classificação
+
+```{r}
+#carregar pacote para fazer o webscraping
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
+
+city_code_booking <- "-1456928"
+checkin_day <- 16
+checkin_month <- 4
+checkin_year <- 2021
+
+checkout_day <- 17
+checkout_month <- 4
+checkout_year <- 2021
+```
+
+```{r}
+df_total_accommodations <- data.frame(number_stars = c("Sem Classificação",1:5),
+                                      number_stars_html = c(0:5),
+                                      total = rep(x = NA, 6) %>% as.integer())
+
+
+
+accommodation_stars <- 0:5 #número de estrelas desejado (0 = sem informação)
+
+for(i in accommodation_stars)
+  { url <- paste0("https://www.booking.com/searchresults.html?checkin_month=",checkin_month,"&checkin_monthday=",checkin_day,"&checkin_year=",checkin_year,"&checkout_month=",checkout_month,"&checkout_monthday=",checkout_day,"&checkout_year=",checkout_year,"&city=",city_code_booking,"&group_adults=2&nflt=class%3D",i,"%3B")
+
+  #lê a página com o URL base
+  page <- url %>% read_html()
+  
+  elem_list <- page %>% html_nodes(".sr_header h1") #retirar apenas o heading 1 para ter acesso ao total de resultados
+  n_prop <- elem_list %>% html_text(trim=T) %>%  str_extract(pattern =  "\\-*\\d+\\.*\\d*") %>% as.numeric()
+  df_total_accommodations[accommodation_stars[i+1]+1,]$total <- n_prop
+  
+  if (i==last(accommodation_stars)) {
+    print("Ciclos finalizados.")
+  
+    } else {
+  sleep_time <-  runif(n = 1, min = 1.0, max = pi) %>% round(digits = 3) %>% format(nsmall=3)
+  print(paste0("Aguardar ",sleep_time," s até ao próximo ciclo.", " Já foram processados ",i+1," de ",length(accommodation_stars)," ciclos."))
+  Sys.sleep(sleep_time)
+  }
+  
+  }
+
+
+# teste ao número de resultados
+teste_resultados <- df_total_accommodations$total %>% sum() ==    read_html("https://www.booking.com/searchresults.html?checkin_month=12&checkin_monthday=17&checkin_year=2020&checkout_month=12&checkout_monthday=18&checkout_year=2020&city=-1456928&group_adults=2") %>% html_nodes(".sr_header h1") %>% html_text(trim=T) %>% gsub(,pattern = "\\,", replacement = "") %>% str_extract(pattern =  "\\-*\\d+\\.*\\d*") %>% as.numeric() #compara se o total de acomodações em Paris é igual ao somatório das acomodações na dataframe com as diferentes classificações
+
+resultado <- if_else(condition = teste_resultados, true =  "é", false = "não é")
+
+print(paste0('O número de resultados obtidos pela soma de todas as propriedades em cada uma das classificações possíveis ',  resultado,' igual ao total de resultados obtidos sem filtros.'))
+
+df_total_accommodations$n_cicles <- ceiling(x = (df_total_accommodations$total/25)) #número de ciclos; arredondar sempre para o número inteiro acima mais próximo
+```
+
+
+#### Acomodações por nível de estrelas
+
+```{r}
+df_cicle <- data.frame(cicle=rep(x = df_total_accommodations$number_stars_html,df_total_accommodations$n_cicles), #cria uma coluna com o valor das estrelas da acomodações em que a frequência é igual ao número de ciclos para capturar todas as ocorrências
+                       offset_number = NA %>% as.numeric() ) #cria a coluna necessária para o parâmetro offset de cada linha
+
+for (j in 1:nrow(df_cicle)) {
+  if (j==1) {
+    df_cicle[j,]$offset_number <- 0
+  }
+  else{
+    df_cicle[j,]$offset_number <- ifelse(test = df_cicle[j,]$cicle!=df_cicle[j-1,]$cicle, yes = 0, no = (sum(df_cicle[1:(j-1),]$cicle==df_cicle[j,]$cicle)*25))
+  }
+}
+```
+
+
+```{r}
+for (z in 1:nrow(df_cicle)) {
+
+  url <- paste0("https://www.booking.com/searchresults.html?checkin_month=",checkin_month,"&checkin_monthday=",checkin_day,"&checkin_year=",checkin_year,"&checkout_month=",checkout_month,"&checkout_monthday=",checkout_day,"&checkout_year=",checkout_year,"&city=",city_code_booking,"&group_adults=2&nflt=class%3D",df_cicle[z,]$cicle,"%3B","&offset=",df_cicle[z,]$offset_number)
+
+  #lê a página com o URL base
+  page <- url %>% read_html()
+
+  elem_list <- page %>% html_nodes(".sr_room_reinforcement:nth-child(1) , .sr_rooms_left_wrap, .e2e-free-cancellation, .sr_card_address_line :nth-child(3), .bui-price-display__value, .bui-review-score__badge, .bui-review-score__text, .sr-hotel__name, .bui-rating--smaller .bui-review-score__title .sr-hotel__title-badges")
+raw_text      <- elem_list %>% html_text(trim=T)
+
+x <- raw_text
+pos <- grepl(x = raw_text,pattern = "€",fixed = T) #posições onde está a indicação do preço
+n_price <- sum(pos) #somatório do número de preços existentes, logo refere o número de hotéis na página
+n <-  df_total_accommodations[df_total_accommodations$number_stars_html==df_cicle[z,]$cicle,]$total-df_cicle[z,]$offset_number #número de preços a ler, retiram-se aqueles que são resultados que Booking sugere quando se pasa para outras cidades
+n <- ifelse(test = n > 25, yes = 25, no = n)
+
+splitAt <- function(x, pos) unname(split(x, cumsum(seq_along(x) %in% pos)))
+hotels_vectors_list <- splitAt(raw_text, which(pos==T)+1) #+1 para extrair para outro vetor após o preço (que é sempre a última informação)
+
+#função para extrair informação dos nodes
+make_col <- function(x) page %>% html_nodes(css = x) %>% html_text(trim = T)
+
+#função para extrair números do string #xxx m/km from center"
+numextract <- function(string){ 
+  dist_center <- str_extract(string, "\\-*\\d+\\.*\\d*") %>% as.numeric()
+  if_else(condition = grepl(string, "km", fixed=TRUE)==T, dist_center, dist_center*1000, NA)
+}
+
+df <- data.frame(hotel_name = make_col(".sr-hotel__name"), #o nome existe sempre, pode-se extrair sempre sem a necessidade de controlar os misings
+                 price_eur =  make_col(".bui-price-display__value") %>% parse_number(), #acontece que com a variável preço
+                 stringsAsFactors = FALSE)
+
+
+df$name_control <- NA
+df$price_control <- NA
+dist_center <- c()
+dist_center_n <- c()
+df$dist_center_km <- NA
+df$score <- NA
+df$n_reviews <- NA
+df$breakfast <- NA
+df$free_cancelation <- NA
+df$n_rooms_left <- NA
+
+if (hotels_vectors_list %>% length < n) {
+  hotels_vectors_list <- hotels_vectors_list[1:n]
+}
+
+for (i in 1:n) {
+  #hotel name control
+  df[i,]$name_control <- hotels_vectors_list[[i]][1]
+  #hotel price control
+  res <- lapply(hotels_vectors_list, function(ch) grep("€", ch)) #números das posições nos vetores da lista em que aparece o símbolo "€"
+  pos_price <- res[[i]] %>% last() #no caso de termos o símbolo "€" no nome do hotel, sabemos que o preço vem sempre em último lugar nos vetores
+  df[i,]$price_control <- ifelse(test = (hotels_vectors_list[[i]][pos_price]  %>% class())=="NULL", yes = NA,no = (hotels_vectors_list[[i]][pos_price] %>% parse_number()))
+  #distance from city center
+  res <- lapply(hotels_vectors_list, function(ch) grep("from centre", ch))#números das posições nos vetores da lista em que aparece o símbolo "€"
+  pos_dist <- res[[i]] #posição no vetor
+  dist_center[i] <- ifelse(test = hotels_vectors_list[[i]][pos_dist]%>% is.character(), yes = hotels_vectors_list[[i]][pos_dist], no = NA)
+  dist_center_n[i] <- dist_center[i] %>% parse_number() #extract numbers
+  df[i,]$dist_center_km <- dplyr::if_else(condition = grepl(x = dist_center[i], pattern = "km", fixed=TRUE)==T, false =  dist_center_n[i]/1000, true =    dist_center_n[i]) #converte na mesmas unidades de medida
+  #score
+  res <- lapply(hotels_vectors_list, function(ch) grep(pattern = '^-?\\d+(,\\d+)*(\\.\\d+(e\\d+)?)?$', ch)) #números das posições nos vetores da lista em que aparecem apenas números com decimais
+  pos_score <- res[[i]]
+  df[i,]$score <- base::ifelse(test = hotels_vectors_list[[i]][pos_score] %>% length() == 1, yes =  hotels_vectors_list[[i]][pos_score] %>% parse_number(), no = NA) #usaremos o ifelse do pacote base, já que
+  #hotel rating
+  res <- lapply(hotels_vectors_list, function(ch) grep(pattern = 'review.', ch)) #números das posições nos vetores da lista em que aparece primeiro um número seguido de um ponto com outro número"
+  pos_reviews <- res[[i]]
+  df[i,]$n_reviews <- base::ifelse(test = hotels_vectors_list[[i]][pos_reviews] %>% length() == 1, yes =  hotels_vectors_list[[i]][pos_reviews] %>% parse_number(), no = NA) #usaremos o ifelse do pacote base, já que com o dplyr produz erro devido pois obriga a que os argumentos das condições "true" e "false" sejam do mesmo tipo de elemento
+  #breakfast included?
+  res <- lapply(hotels_vectors_list, function(ch) grep(pattern = 'Breakfast included', ch)) #procurar pela expressão "Breakfast included
+  pos_breakfast <- res[[i]] 
+  df[i,]$breakfast <- base::ifelse(test = hotels_vectors_list[[i]][pos_breakfast] %>% length() == 1, yes =  "Yes", no = "No")
+  #FREE cancellation?
+  res <- lapply(hotels_vectors_list, function(ch) grep(pattern = 'FREE cancellation', ch)) #procurar pela expressão "Breakfast included
+  pos_free_cancel <- res[[i]] 
+  df[i,]$free_cancelation <- base::ifelse(test = hotels_vectors_list[[i]][pos_free_cancel] %>% length() == 1, yes =  "Yes", no = "No")
+  #rooms left?
+  res <- lapply(hotels_vectors_list, function(ch) grep(pattern = "room. left", ch)) #procurar pela expressão "Breakfast included
+  pos_rooms_left <- res[[i]] 
+  df[i,]$n_rooms_left <- base::ifelse(test = hotels_vectors_list[[i]][pos_rooms_left] %>% length() == 1, yes = hotels_vectors_list[[i]][pos_rooms_left] %>% parse_number() %>% as.integer(), no = 1)
+}
+root <- html_nodes(page,".sr_item")
+
+#número de hotéis na extração corrente
+n_extraction <- html_nodes(page,".sr_item") %>% length()
+
+#gerar vetor vazio
+hotel_id <- c()
+#loop para obter todos os ID's em cada lista
+for (i in 1:n_extraction) {
+  skip_to_next <- FALSE  
+  tryCatch(hotel_id[i] <- xml_attrs(root[[i]])[["data-hotelid"]], error = function(e) { skip_to_next <<- TRUE})
+  if(skip_to_next) { next }
+}
+df$hotel_id  <- hotel_id
+
+n_stars <- c()
+
+
+#outra solução seria ir buscar "xml_attrs(root[[1]])[["data-class"]]", porém este gera valores de zero ("0") para valores sem estrelas, fica a dúvida se é mesmo assim, ou se é simplesmente uma ausência
+
+for (i in 1:25) {
+  
+  skip_to_next <- FALSE
+  tryCatch(n_stars[i] <- xml_attrs(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(root[[i]], 1), 1), 1), 2), 1), 2), 1), 1), 1))[["aria-label"]]%>% stringi::stri_extract_first_regex("[0-9]+") %>% as.integer(), error = function(e) { skip_to_next <<- TRUE})
+    if(skip_to_next) { next }
+}
+df$n_stars <- n_stars
+
+
+hotel_coord <- c()
+
+for (i in 1:n_extraction) {
+  
+  skip_to_next <- FALSE
+  tryCatch(hotel_coord[i] <- xml_attrs(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(root[[i]], 1), 1), 1), 2), 2), 1))[["data-coords"]], error = function(e) { skip_to_next <<- TRUE})
+    if(skip_to_next) { next }
+}
+hotel_coord <- ifelse(test = length(hotel_coord)!=25, yes = c(hotel_coord, rep(NA, 25-length(hotel_coord))),no = hotel_coord)
+df$hotel_coord <- hotel_coord
+
+
+link_url <- c()
+for (i in 1:n_extraction) {
+  
+  skip_to_next <- FALSE
+  tryCatch(link_url[i] <- xml_attrs(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(xml_child(root[[i]], 1), 1), 2), 1), 1), 1), 1), 1))[["data-link"]], error = function(e) { skip_to_next <<- TRUE})
+    if(skip_to_next) { next }
+}
+df$n_stars_control <- df_total_accommodations[df_total_accommodations$number_stars_html==df_cicle[z,]$cicle,]$number_stars
+
+df$link_url <- paste0("https://www.booking.com",link_url) #completar o link de acesso à página de cada acomodação
+
+ifelse(test = exists("df_all")&z==1, yes = rm(df_all), no = "")
+
+if (!exists("df_all")) {
+  #se a base de dados para agregação ainda não existir, criar a mesma
+  df_all <- data.frame(
+    hotel_name=character(),
+    price_eur=double(),
+    name_control=character(),
+    price_control=double(),
+    dist_center_km=double(),
+    score=double(),
+    n_reviews=double(),
+    breakfast=character(),
+    free_cancelation=character(),
+    n_rooms_left=integer(),
+    hotel_id=character(),
+    hotel_coord=character(),
+    n_stars_control=character(),
+    stringsAsFactors=FALSE)
+} 
+
+
+
+df_all <- dplyr::full_join(x = df_all, y = df)
+
+if (z==nrow(df_cicle)) {
+    print("Ciclos finalizados.")
+    } else {
+  sleep_time <-  runif(n = 1, min = 1.0, max = pi) %>% round(digits = 3) %>% format(nsmall=3)
+  print(paste0("Aguardar ",sleep_time," s até ao próximo ciclo.", " Já foram processados ",z," de ",sum(df_total_accommodations$n_cicles)," ciclos."))
+  Sys.sleep(sleep_time)
+  }
+}
+```
+
+
+#### Tipo de propriedade (_Property Type_)
+
+Devido ao problema do limite de 1000 resultados por busca dividiram os hotéis por níveis de estrelas (6 categorias), e os apartamentos não (uma categoria só). 
+
+```{r}
+df_total_properties <- data.frame(
+  prop_type = c(rep("Hotel",6),"Apartamento"),
+  prop_type = c(rep("Hotel",6),"Apartamento"),
+  number_stars_html = c(paste0("class%3D",0:5,"%3B"), rep("",1)),
+  prop_type_html = c(rep("&nflt=ht_id%3D204%3B",6),"&nflt=ht_id%3D201%3B"),
+  total = rep(x = NA, 7) %>% as.integer())
+
+
+
+property_types <- paste0(df_total_properties$prop_type_html,df_total_properties$number_stars_html) #tipologias de propriedades (hotel vs. apartamento) ignoram-se as restantes (i.e., Hostels,Bed and Breakfasts,Guesthouses,Homestays,Campgrounds,Love Hotels) pois têm frequências muito baixas
+
+for(i in property_types)
+  { url <- paste0("https://www.booking.com/searchresults.html?checkin_month=",checkin_month,"&checkin_monthday=",checkin_day,"&checkin_year=",checkin_year,"&checkout_month=",checkout_month,"&checkout_monthday=",checkout_day,"&checkout_year=",checkout_year,"&city=",city_code_booking,"&group_adults=2",i)
+
+  n_prop <- read_html(url) %>% html_nodes(".sr_header h1") %>% html_text(trim=T) %>% gsub(,pattern = "\\,", replacement = "") %>% str_extract(pattern =  "\\-*\\d+\\.*\\d*") %>% as.numeric()
+  
+  df_total_properties[match(x = i, table = property_types),]$total <- n_prop
+  
+  if (i==last(property_types)) {
+    print("Ciclos finalizados.")
+  
+    } else {
+  sleep_time <-  runif(n = 1, min = 1.0, max = pi) %>% round(digits = 3) %>% format(nsmall=3)
+  print(paste0("Aguardar ",sleep_time," s até ao próximo ciclo.", " Já foram processados ",match(x = i, table = property_types)," de ",length(property_types)," ciclos."))
+  Sys.sleep(sleep_time)
+  }
+  
+}
+
+
+df_total_properties$n_cicles <- ceiling(x = (df_total_properties$total/25)) #número de ciclos;
+```
+
+
+#### Propriedades pelo tipo de propriedade (hotel vs. apartamento)
+
+
+
+```{r}
+df_cicle_prop <- data.frame(cicle=rep(x = paste0(df_total_properties$prop_type_html,df_total_properties$number_stars_html),df_total_properties$n_cicles), #cria uma coluna com o valor das estrelas da acomodações em que a frequência é igual ao número de ciclos para capturar todas as ocorrências
+                       offset_number = NA %>% as.numeric() ) #cria a coluna necessária para o parâmetro offset de cada linha
+
+for (j in 1:nrow(df_cicle_prop)) {
+  if (j==1) {
+    df_cicle_prop[j,]$offset_number <- 0
+  }
+  else{
+    df_cicle_prop[j,]$offset_number <- ifelse(test = df_cicle_prop[j,]$cicle!=df_cicle_prop[j-1,]$cicle, yes = 0, no = (sum(df_cicle_prop[1:(j-1),]$cicle==df_cicle_prop[j,]$cicle)*25))
+  }
+}
+```
+
+
+
+```{r}
+for (z in 1:nrow(df_cicle_prop)) {
+
+  url <- paste0("https://www.booking.com/searchresults.html?checkin_month=",checkin_month,"&checkin_monthday=",checkin_day,"&checkin_year=",checkin_year,"&checkout_month=",checkout_month,"&checkout_monthday=",checkout_day,"&checkout_year=",checkout_year,"&city=",city_code_booking,"&group_adults=2",df_cicle_prop[z,]$cicle,"&offset=",df_cicle_prop[z,]$offset_number)
+
+  #lê a página com o URL base
+  page <- url %>% read_html()
+
+  elem_list <- page %>% html_nodes(".sr_room_reinforcement:nth-child(1) , .sr_rooms_left_wrap, .e2e-free-cancellation, .sr_card_address_line :nth-child(3), .bui-price-display__value, .bui-review-score__badge, .bui-review-score__text, .sr-hotel__name, .bui-rating--smaller .bui-review-score__title .sr-hotel__title-badges")
+raw_text      <- elem_list %>% html_text(trim=T)
+
+x <- raw_text
+pos <- grepl(x = raw_text,pattern = "€",fixed = T) #posições onde está a indicação do preço
+n_price <- sum(pos) #somatório do número de preços existentes, logo refere o número de hotéis na página
+n <-  df_total_properties[paste0(df_total_properties$prop_type_html,df_total_properties$number_stars_html)==df_cicle_prop[z,]$cicle,]$total-df_cicle_prop[z,]$offset_number #número de preços a ler, retiram-se aqueles que são resultados que Booking sugere quando se pasa para outras cidades
+n <- ifelse(test = n > 25, yes = 25, no = n)
+
+splitAt <- function(x, pos) unname(split(x, cumsum(seq_along(x) %in% pos)))
+hotels_vectors_list <- splitAt(raw_text, which(pos==T)+1) #+1 para extrair para outro vetor após o preço (que é sempre a última informação)
+
+#função para extrair informação dos nodes
+make_col <- function(x) page %>% html_nodes(css = x) %>% html_text(trim = T)
+
+#função para extrair números do string #xxx m/km from center"
+numextract <- function(string){ 
+  dist_center <- str_extract(string, "\\-*\\d+\\.*\\d*") %>% as.numeric()
+  if_else(condition = grepl(string, "km", fixed=TRUE)==T, dist_center, dist_center*1000, NA)
+}
+
+df_prop <- data.frame(hotel_name = make_col(".sr-hotel__name"), #o nome existe sempre, pode-se extrair sempre sem a necessidade de controlar os misings
+                 price_eur =  make_col(".bui-price-display__value") %>% parse_number(), #acontece que com a variável preço
+                 stringsAsFactors = FALSE)
+
+
+df_prop$name_control <- NA
+df_prop$price_control <- NA
+
+if (hotels_vectors_list %>% length < n) {
+  hotels_vectors_list <- hotels_vectors_list[1:n]
+}
+
+
+for (i in 1:n) {
+  #hotel name control
+  df_prop[i,]$name_control <- hotels_vectors_list[[i]][1]
+  }
+root <- html_nodes(page,".sr_item")
+
+#número de hotéis na extração corrente
+n_extraction <- html_nodes(page,".sr_item") %>% length()
+
+#gerar vetor vazio
+hotel_id <- c()
+#loop para obter todos os ID's em cada lista
+for (i in 1:n_extraction) {
+  skip_to_next <- FALSE  
+  tryCatch(hotel_id[i] <- xml_attrs(root[[i]])[["data-hotelid"]], error = function(e) { skip_to_next <<- TRUE})
+  if(skip_to_next) { next }
+}
+
+if (df_prop %>% nrow !=   hotel_id %>% length()) {
+
+  hotel_id <- c(hotel_id, rep(NA, df_prop %>% nrow -   hotel_id %>% length()))
+}
+df_prop$hotel_id  <- hotel_id
+
+df_prop$prop_type_control <- df_total_properties[paste0(df_total_properties$prop_type_html,df_total_properties$number_stars_html)==df_cicle_prop[z,]$cicle,]$prop_type
+
+ifelse(test = exists("df_all_prop")&z==1, yes = rm(df_all_prop), no = "")
+
+if (!exists("df_all_prop")) {
+  #se a base de dados para agregação ainda não existir, criar a mesma
+  df_all_prop <- data.frame(
+    hotel_name=character(),
+    hotel_id=character(),
+    stringsAsFactors=FALSE)
+} 
+
+
+
+df_all_prop <- dplyr::full_join(x = df_all_prop, y = df_prop)
+
+if (z==nrow(df_cicle_prop)) {
+    print("Ciclos finalizados.")
+    } else {
+  sleep_time <-  runif(n = 1, min = 1.0, max = pi) %>% round(digits = 3) %>% format(nsmall=3)
+  print(paste0("Aguardar ",sleep_time," s até ao próximo ciclo.", " Já foram processados ",z," de ",sum(df_total_properties$n_cicles)," ciclos."))
+  Sys.sleep(sleep_time)
+  }
+
+}
+```
+
+#### Merge property type information in the database
+
+```{r}
+df_all$prop_type <- NA
+df_all[which(df_all$hotel_id %in% df_all_prop[df_all_prop$prop_type_control=="Hotel",]$hotel_id),]$prop_type <- "Hotel"
+df_all[which(df_all$hotel_id %in% df_all_prop[df_all_prop$prop_type_control=="Apartamento",]$hotel_id),]$prop_type <- "Apartamento"
+
+saveRDS(object = df_all, file = "df_all.rds")
+```
+
+
+
+```{r}
+## Compreensão dos dados (análise de todas as variáveis e das instâncias)
+
+barplot(df_all$price_eur, xlab = "Hotels", ylab = "Price per night (EUR)")
+str(df_all)
+summary(df_all)
+```
+
+```{r}
+corrplot.mixed(cor(df_all[sapply(df_all, is.numeric)], use = "c"), , 
+               order = "hclust", #order of variables
+               tl.pos = "lt", #text left + top
+               upper = "ellipse")
+```
+
+
+
+```{r}
+##Packages utilizados na análise:
+
+## Preparação dos dados
+#Remoção dos hotéis duplicados
+duplicated(df_all$hotel_id)
+
+df <- df_all
+
+dupl_hotels <- data.frame(df[duplicated(df$hotel_name),]$hotel_name)
+
+#Novo data frame sem hotéis/propriedades duplicadas
+df2 <- df %>% distinct(hotel_name, .keep_all = TRUE)
+barplot(df2$price_eur, xlab = "Hotels", ylab = "Price per night (EUR)")
+str(df2)
+summary(df2)
+
+#Conversão de dados categóricos para valores numéricos (NAs, rooms left, breakfast etc.)
+df3 <- df2
+df3 <- df3 %>% mutate(breakfast = ifelse(breakfast == "No",0,1))
+df3 <- df3 %>% mutate(free_cancelation = ifelse(free_cancelation == "No",0,1))
+df3 <- df3 %>% mutate(n_rooms_left = ifelse(n_rooms_left > 0,1,0))
+df3$n_rooms_left[is.na(df3$n_rooms_left)] <- 0
+df3$n_stars[is.na(df3$n_stars)] <- 0
+summary(df3)
+
+#Identificação de outliers
+boxplot(df3$price_eur, plot = FALSE)$out
+#Verificação individual do MAX(df3$price_eur)
+df3$hotel_name[df3$price_eur == max(df3$price_eur)]
+#Verificação individual das diárias superior a 1000 EUR - propriedades:
+df3$hotel_name[df3$price_eur >= 2000]
+
+df_temp <- df3[c(1:252,254:nrow(df3)),]
+boxplot(df_temp$price_eur)$out
+
+df_temp <- df_temp[!df_temp$price_eur >= min(boxplot(df3$price_eur, plot = FALSE)$out),]
+boxplot(df_temp$price_eur)$out
+barplot(df_temp$price_eur, xlab = "Hotels", ylab = "Price per night (EUR)")
+
+#Remoção das linhas com preenchimento NA
+summary(df_temp)
+df_temp <- df_temp[!is.na(df_temp$dist_center_km == "NA"),]
+df_temp <- df_temp[!is.na(df_temp$score == "NA"),]
+df_temp <- df_temp[!is.na(df_temp$n_reviews == "NA"),]
+df_temp <- df_temp[!is.na(df_temp$breakfast == "NA"),]
+
+#Base de dados final, ao final da etapa de pré-processamento
+df_num <- as.data.frame(df_temp[,c(2,5:10,15)])
+row.names(df_num) <- df_temp$hotel_name
+str(df_num)
+summary(df_num)
+var(df_num$price_eur, df_num)
+pairs(df_num[,1:4], pch = 19, lower.panel = NULL)
+df_corr <- round(cor(df_num),3)
+par(oma = c(2, 2, 2, 2))
+corrplot.mixed(df_corr,tl.pos = "lt", upper = "ellipse")
+```
+
+```{r}
+## Modelação
+
+###### Definição de amostra, conjuntos teste e treino
+set.seed(123)
+index_1 <- sample(1:nrow(df_num), round(nrow(df_num)*3/4))
+train_1 <- df_num[index_1,]
+test_1 <- df_num[-index_1,]
+
+###### Regressão Linear Múltipla | Todas as variáveis disponíveis
+model_mult1 <- lm(formula = price_eur ~ ., data = train_1)
+coef(model_mult1)
+summary(model_mult1)
+
+#Coeficiente de determinação (R²) - Conjunto Treino
+RSQ_train <- summary(model_mult1)
+RSQ_train$r.squared
+
+#Root Mean Square Error (RMSE) - Conjunto Treino
+RMSE_train<-sigma(model_mult1)
+round(RMSE_train, 3)
+
+#Mean Squared Error (MSE) - Conjunto Treino
+MSE_train<-sigma(model_mult1)^2
+round(MSE_train, 3)
+
+#Mean Absolute Error(MAE)- Conjunto Treino
+MAE_train<-mean(resid(model_mult1))
+round(MAE_train, 3)
+
+# CROSS-VALIDATION: Regressão múltipla | Todas as variáveis preditoras disponíveis
+xval.control <- trainControl(method = "cv", number = 10)
+lm.xval <- train(price_eur ~ ., data = train_1, method = "lm", trControl = xval.control)
+lm.xval
+
+# CROSS-VALIDATION: Coeficiente de determinação (R²) - Conjunto Treino
+RSQ_train_cv <- summary(lm.xval)
+round(RSQ_train_cv$r.squared, 3)
+
+###### Teste do modelo de regressão múltipla | Todas as variáveis disponíveis
+predict_mult1 <- predict(model_mult1, test_1)
+
+#Tabela com os valores reais e estimados:
+predict_comp <- data.frame(Vprevisto = predict_mult1, Vreal = test_1$price_eur)
+predict_comp$error <- (predict_comp$Vprevisto - test_1$price_eur)
+summary(predict_comp)
+
+#Mean Squared Error (MSE) - Conjunto Teste
+MSE_test <- with(predict_comp,mean(error^2))
+round(MSE_test, 3)
+
+#Root Mean Square Error (RMSE) - Conjunto Teste
+RMSE_test <- sqrt(MSE_test)
+round(RMSE_test, 3)
+
+#Mean Absolute Error(MAE)- Conjunto Treino
+MAE_test <- with(predict_comp,mean(abs(error)))
+round(MAE_test, 3)
+
+#Exibição dos erros do Conjunto Treino
+print(paste("RMSE Conjunto Treino: ", round(RMSE_test, digits = 3)))
+print(paste("MSE Conjunto Treino: ", round(MSE_test, digits = 3)))
+print(paste("MAE Conjunto Treino: ", MAE_test))
+```
+
+```{r}
+###### Regressão Linear Múltipla | Quatro variáveis de maior variância
+model_mult2 <- lm(formula = price_eur ~ dist_center_km + score + n_reviews, data = train_1)
+coef(model_mult2)
+summary(model_mult2)
+
+#Coeficiente de determinação (R²) - Conjunto Treino
+RSQ2_test <- summary(model_mult2)
+round(RSQ2_test$r.squared, 3)
+
+#Root Mean Square Error (RMSE) - Conjunto Treino
+RMSE2_train<-sigma(model_mult2)
+round(RMSE2_train, 3)
+
+#Mean Squared Error (MSE) - Conjunto Treino
+MSE2_train<-sigma(model_mult2)^2
+round(MSE2_train, 3)
+
+#Mean Absolute Error(MAE)- Conjunto Treino
+MAE2_train<-mean(resid(model_mult2))
+round(MAE2_train, 3)
+
+# CROSS-VALIDATION
+xval.control2 <- trainControl(method = "cv", number = 10)
+lm.xval2 <- train(price_eur ~ dist_center_km + score + n_reviews + n_stars, data = train_1, method = "lm", trControl = xval.control2)
+lm.xval2
+
+# CROSS-VALIDATION: Coeficiente de determinação (R²) - Conjunto Treino
+RSQ2_train_cv <- summary(lm.xval2)
+round(RSQ2_test$r.squared, 3)
+
+###### Teste do modelo de regressão múltipla | Quatro variáveis de maior variância
+predict_mult2 <- predict(model_mult2, test_1)
+
+#Tabela com os valores reais e estimados:
+predict_comp2 <- data.frame(Vprevisto2 = predict_mult2, Vreal = test_1$price_eur)
+predict_comp2$error <- (predict_comp2$Vprevisto - test_1$price_eur)
+summary(predict_comp2)
+
+###########
+##### Redes Neurais
+#Conversão para o intervalo [0,1]
+norm01 <- function(x){(x-min(x))/(max(x)-min(x))}
+df4 <- df_num
+df4[,1] <- norm01(df_num[,1])
+df4[,2] <- norm01(df_num[,2])
+df4[,3] <- norm01(df_num[,3])
+df4[,4] <- norm01(df_num[,4])
+df4[,7] <- norm01(df_num[,7])
+df4[,8] <- norm01(df_num[,8])
+summary(df4)
+set.seed(123)
+index_nn <- sample(1:nrow(df4), round(nrow(df4)*3/4))
+train_nn <- df4[index_nn,]
+test_nn <- df4[-index_nn,]
+my.nnet <- neuralnet(train_nn$price_eur ~ ., data = train_nn, act.fct = 'logistic', err.fct = 'sse', hidden = 12, linear.output = FALSE)
+par(mfrow=c(1,1))
+plot(my.nnet)
+
+#Estimativa calculada sobre o conjunto teste
+predict_nn <- compute(my.nnet, test_nn)
+
+#Escala original dos preços estimados
+predict_comp_nn <- data.frame(Vprevisto = round(predict_nn$net.result*(max(df_num$price_eur)-min(df_num$price_eur))+min(df_num$price_eur),2), Vreal = test_1$price_eur)
+predict_comp_nn$Error_nn <- (predict_comp_nn$Vprevisto - predict_comp_nn$Vreal)
+summary(predict_comp_nn$Vprevisto)
+barplot(predict_comp_nn$Error_nn)
+
+```
+
+```{r}
+## Avaliação (avaliação dos resultados)
+
+#Compilação dos resultado das regressões múltiplas (ALL e Quatro variáveis preditoras)
+
+mult_rsq_result_train <- data.frame(R2_ALL = round(RSQ_train_cv$r.squared,3), R2_ALL_CV = round(RSQ_train_cv$r.squared, 3), R2_4V = round(RSQ2_test$r.squared,3), R2_4V_CV = round(RSQ2_test$r.squared, 3))
+print(mult_rsq_result_train)
+                                      
+mult_error_result_train <- data.frame(RMSE_ALL = round(RMSE_train, 3), RMSE_4V = round(RMSE2_train, 3), MSE_ALL = round(MSE_train, 3), MSE_4V = round(MSE2_train, 3), MAE_ALL = MAE_train, MAE_4V = MAE2_train)
+print(mult_error_result_train)
+
+mult_result_test <- data.frame(RMSE_ALL = round(RMSE_test, 3), RMSE_4V = round(RMSE2_train, 3), MSE_ALL = round(MSE_test, 3), MSE_4V = round(MSE2_train, 3), MAE_ALL = MAE_test, MAE_4V = MAE2_train)
+print(mult_result_test)
+```
+
+## Implementação (proposta de implementação)
+```{r}
+summary(df_num$price_eur)
+summary(predict_comp$Vprevisto)
+summary(predict_comp2$Vprevisto)
+
+```
+
+```{r}
+###### Arvore decisao | Definição de amostra, conjuntos teste e treino
+
+
+set.seed(123)
+index_1 <- sample(1:nrow(df_num), round(nrow(df_num)*3/4))
+train_1 <- df_num[index_1,]
+test_1 <- df_num[-index_1,]
+
+```
+
+```{r}
+##### Árvore de decisão
+model_tree<-rpart(formula = price_eur~.,data=train_1,method="anova",control=rpart.control(xval = 10))
+model_tree_party<-as.party(model_tree)
+model_tree_party
+rpart.plot(model_tree,yesno=TRUE)
+printcp(model_tree)
+# Teste do Modelo criado 
+model_tree_previsao<-predict(model_tree,test_1,type="vector")
+plot(test_1$price_eur,model_tree_previsao,main="Árvore model_tree: Previstos vs Reais",xlab="Reais",ylab="Previstos")
+abline(0,1)
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_tree_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_tree_previsao)
+tabela
+model_tree_rmse <- RMSE(model_tree_previsao, test_1$price_eur)
+model_tree_rmse
+model_tree_mae <- MAE(model_tree_previsao, test_1$price_eur)
+model_tree_mae
+
+```
+
+```{r}
+#### operação de poda
+model_tree$cptable
+plotcp(model_tree)
+cp<-which.min(model_tree$cptable[,"xerror"])
+cp
+# Criação e Teste de um novo modelo de árvore
+model_tree_prune<-prune(model_tree,cp=0.020) #coloquei 0.020 pq o cp dá 8
+model_tree_party<-as.party(model_tree_prune)
+c
+rpart.plot(model_tree_prune,yesno=TRUE)
+
+model_tree_prune_previsao<-predict(model_tree_prune,test_1,type="vector")
+plot(test_1$price_eur,model_tree_prune_previsao,main="Árvore model_tree_prune: Previstos vs Reais",xlab="Reais",ylab="Previstos")
+abline(0,1)
+# Teste do Modelo criado 
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_tree_prune_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_tree_prune_previsao)
+tabela
+
+model_tree_prune_rmse<-RMSE(model_tree_prune_previsao,test_1$price_eur)
+model_tree_prune_rmse
+model_tree_prune_mae<-MAE(model_tree_prune_previsao, test_1$price_eur)
+model_tree_prune_mae
+```
+
+```{r}
+# Validação Cruzada com k=10; tuneLenght=5
+
+cv.control<-trainControl(method="cv",number=10)
+model_cv<-train(price_eur ~., data=train_1,method="rpart",metric="RMSE",tuneLength=5, trControl=cv.control)
+model_cv
+plot(model_cv)
+# Teste ao Modelo criado 
+model_cv_previsao<-predict(model_cv,test_1)
+plot(test_1$price_eur,model_cv_previsao,main="Árvore model_cv (k=10): Previstos vs Reais",xlab="Reais",ylab="Previstos")
+abline(0,1)
+
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_cv_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_cv_previsao)
+tabela
+
+model_cv_rmse<-RMSE(model_cv_previsao, test_1$price_eur)
+model_cv_rmse
+model_cv_mae<-MAE(model_cv_previsao, test_1$price_eur)
+model_cv_mae
+
+# Representação Gráfica da melhor árvore obtida
+rpart.plot(model_cv$finalModel)
+plot(varImp(model_cv),main="Importância das Variáveis")
+```
+
+```{r}
+### método Bagging
+
+cv.control<-trainControl(method="cv",number=10,savePredictions="final")
+model_bag<-train(price_eur~.,data=train_1,method="treebag",nbagg=100,metric="RMSE",tuneLength=5,trControl=cv.control)
+model_bag
+# Teste do Modelo criado 
+model_bag_previsao<-predict(model_bag,test_1)
+plot(test_1$price_eur,model_bag_previsao,main="Árvore obtida com método Bagging: Previstos vs Reais",xlab="Reais",ylab="Previstos")
+abline(0,1)
+
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_bag_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_bag_previsao)
+tabela
+
+model_bag_rmse<-RMSE(model_bag_previsao, test_1$price_eur)
+model_bag_rmse
+model_bag_mae<-MAE(model_bag_previsao, test_1$price_eur)
+model_bag_mae
+
+#Importância das variáveis
+plot(varImp(model_bag),main="Importância das Variáveis com o modelo de árvore obtido com o método Bagging")
+```
+
+```{r}
+###Florestas Aleatórias
+
+cv.control<-trainControl(method="cv",number=10,savePredictions="final")
+model_forest<-train(price_eur ~.,data=train_1,method="ranger",metric="RMSE",tuneLength=5,trControl=cv.control)
+model_forest
+# Teste do Modelo criado 
+model_forest_previsao<-predict(model_forest,test_1)
+plot(test_1$price_eur,model_forest_previsao,main="Árvore obtida com método Florestas Aleatórias: Previstos vs Reais",xlab="Reais",ylab="Previstos")
+abline(0,1)
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_forest_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_forest_previsao)
+tabela
+
+model_forest_rmse<-RMSE(model_forest_previsao, test_1$price_eur)
+model_forest_rmse
+model_forest_mae<-MAE(model_forest_previsao, test_1$price_eur)
+model_forest_mae
+
+#Importância das variáveis
+plot(varImp(model_forest),main="Importância das Variáveis com o modelo de árvore obtido com o método Florestas Aleatórias")
+cv.control<-trainControl(method="cv",number=10,savePredictions="final")
+model_forest<-train(price_eur ~.,data=train_1,method="ranger",metric="RMSE",importance="impurity",tuneLength=5,trControl=cv.control)
+model_forest
+#Importância das variáveis
+plot(varImp(model_forest),main="Importância das Variáveis com o modelo de árvore obtido com Florestas Aleatórias")
+```
+
+```{r}
+####### Boosting
+cv.control<-trainControl(method="cv",number=10,savePredictions="final")
+model_boosting<-train(price_eur ~.,data=train_1,method="gbm",trControl=cv.control)
+model_boosting
+#Teste ao Modelo criado 
+model_boosting_previsao<-predict(model_boosting,test_1)
+plot(test_1$price_eur,model_boosting_previsao,main="Árvore obtida com método boosting: Previstos vs reais", xlab="Reais", ylab="Previstos")
+abline(0,1)
+
+tabela<-data.frame(VReais=test_1$price_eur,VPrevistos=model_boosting_previsao)
+tabela$error<-with(tabela,test_1$price_eur-model_boosting_previsao)
+tabela
+
+model_boosting_rmse<-RMSE(model_boosting_previsao, test_1$price_eur)
+model_boosting_rmse
+model_boosting_mae<-MAE(model_boosting_previsao, test_1$price_eur)
+model_boosting_mae
+
+#Importância das variáveis
+plot(varImp(model_boosting),main="Importância das Variáveis com o modelo de árvore obtido com gbm")
+
+```

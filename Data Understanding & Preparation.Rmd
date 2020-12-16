@@ -1,0 +1,79 @@
+---
+title: "Data Understanding & Preparation"
+author: "Sinval, J."
+date: "9/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Definir bem o problema
+
+**Que variável ou variáveis introduzir?**
+
+Exemplo: Qual o número de vendas de um produto colocada à venda no e-Bay?
+
+**Que variáveis podem ter impacto ou influenciar o meu problema?**
+
+**Que fontes de informação tenho para obter essas variáveis?**
+
+Como juntar dadso de fontes diferentes?
+
+Normalização de chaves: nem sempre é fácil.
+
+### Exercício
+
+```{r}
+library(rvest)
+url <- "https://forum.motorguia.net/forum-geral/"
+
+#lê a página
+page <- url %>% read_html()
+
+
+page
+elem_list <- page %>% html_nodes(xpath = '//*[@class="title"]')
+titles <- html_text(elem_list)
+
+# "a" no começo procura apeanas elementos começados por "<a"
+elem_list <- page %>% html_nodes(xpath = '//a[starts-with(@id,"thread_title_")]')
+titles <- html_text(elem_list)
+```
+
+**Que variáveis tenho para caracterizar o meu problema?**
+
+```{r}
+elem_list <- page %>%  html_nodes(xpath = '//span/*[@class="username understate"]')
+user_created <- html_text(elem_list) #user_created (2)
+```
+
+
+```{r}
+file <- "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
+df <- read.csv(file)
+
+df.pt <- df[df$countriesAndTerritories=="Portugal",]
+
+boxplot(df.pt$deaths)
+
+summary(df$Cumulative_number_for_14_days_of_COVID.19_cases_per_100000)
+
+df2 <- imputation("hotdeck",df, "Cumulative_number_for_14_days_of_COVID.19_cases_per_100000", Value=1)
+
+summary(df2$Cumulative_number_for_14_days_of_COVID.19_cases_per_100000)
+```
+```{r}
+summary(df$popData2019)
+df[df$popData2019 %>% is.na(),]
+
+table(df$popData2019)
+```
+
+
+```{r}
+library(pacman)
+p_load("rminer", "knn")
+```
+

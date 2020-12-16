@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Previsão do preços de hotéis em Paris</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Ana Sucena, Felipe Amaral, &amp; Jorge Sinval" />
+    <meta name="date" content="2020-12-16" />
+    <script src="slides_files/header-attrs/header-attrs.js"></script>
+    <link href="slides_files/remark-css/default.css" rel="stylesheet" />
+    <link href="slides_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="slides_files/panelset/panelset.js"></script>
+    <link href="slides_files/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="slides_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="slides_files/tile-view/tile-view.js"></script>
+    <link rel="stylesheet" href="css/metropolis.css" type="text/css" />
+    <link rel="stylesheet" href="css/metropolis-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Previsão do preços de hotéis em Paris
+## Metodologias e Tecnologias para Ciência de Dados | Modelos de Previsão
+### Ana Sucena, Felipe Amaral, &amp; Jorge Sinval
+### 2020-12-16
+
+---
+
+
+&lt;style&gt;
+
+.remark-slide-number {
+  position: inherit;
+}
+
+.remark-slide-number .progress-bar-container {
+  position: absolute;
+  bottom: 0;
+  height: 6px;
+  display: block;
+  left: 0;
+  right: 0;
+}
+
+.remark-slide-number .progress-bar {
+  height: 100%;
+  background-color: #0f4c81;
+}
+
+.orange {
+  color: #EB811B;
+}
+&lt;/style&gt;
+
+# Estrutura
+
+- Introdução
+
+--
+
+- _Business Understanding_
+
+--
+
+- _Data preparation_
+
+--
+
+- Data Analysis
+  
+  . Regressão Linear Múltipla
+  
+  . Redes Neuronais
+  
+  . Árvores de decisão
+  
+--
+
+- Avaliação dos resultados
+
+---
+
+# Introdução
+
+## Objetivo
+
+**A prever os preços dos hotéis em Paris na estadia de uma noite de dia 16 para 17 de abril de 2021 (utilizando o CRISP-DM).**
+
+--
+
+1. análise do setor turismo de uma forma geral e mais detalhada para a cidade de Paris.
+
+--
+
+2. análise dos dados em questão, nomeadamente quais as variáveis que podem influenciar o problema e a sua descrição.
+
+--
+
+3. data preparation: web scrapping e limpeza de dados.
+
+--
+
+4. redes neuronais e  modelos de previsão,  nomeadamente usando a  regressão linear múltipla e  árvores de decisão.
+
+--
+
+5. valiação dos modelos criados e seus  resultados, apresentando as  limitações que surgiram em fases anteriores
+
+
+---
+
+# Business Understanding
+
+Nos últmos anos assistimos a um aumento de canais de  venda online , sendo o Booking.com a maior no mercado  de agências de viagens online europeias (OTA), com uma  participação de mercado de 67,7% em 2019.
+
+--
+
+Existem vários fatores econômicos determinantes  para a escolha de um quarto. O objetivo do hotel, ao  determinar os preços dos quartos é atingir um  equilíbrio para maximizar o lucro
+
+--
+
+A teoria de preços hedónicos (Lancaster, 1966; Rosen, 1974) diz que o preço de um  produto pode ser considerado uma função das  suas características que afetam a utilidade  para o consumidor
+
+
+---
+
+# Business Understanding
+
+Existem vários fatores que podem  influenciar o preço de um quarto  de hotel:
+- a localização do hotel,
+- as comodidades nos quartos  do hotel,
+- a disponibilidade de
+- restaurantes perto do hotel,  a disponibilidade de  estacionamento,
+- a reputação do
+- estabelecimento,
+- os níveis de limpeza e  segurança
+- ...
+
+
+---
+
+# Business Understanding
+
+## Paris
+
+A  capital francesa encontra-se	entre os destinos mais visitados da Europa, com turistas internacionais a gastar mais de 10 bilhões de dólares por ano.
+
+--
+
+Em 2016, este setor contribuiu com 198,3 bilhões de euros para a  economia francesa e criou 2,8 bilhões de empregos, direta e indiretamente.
+
+--
+
+Em 2018, França contou com um total de 89,4 milhões de visitantes  (aumentou 3% em relação a 2017), sendo que Paris teve mais de 40 milhões  de visitantes. Em 2018 o país tinha como meta, 100 milhões de turistas  estrangeiros  em 2020.
+
+--
+
+Na última década França sofreu vários ataques terroristas o que não é  favorável ao turismo. Mais grave está a ser o período de pandemia.De  acordo com um relatório da ADN Tourisme, apenas 53% dos residentes  franceses foram de férias em julho e agosto, em comparação com 71% em  2019. Mas 94% dos que viajaram foi dentro do próprio país, dando um  impulso ao setor do turismo. O estudo constatou que os turistas franceses  optam cada vez mais por casas de aluguer de temporada, que oferecem  maior privacidade e parecem mais seguras em termos de saneamento. Hotéis  e acampamentos com instalações compartilhadas foram menos populares.
+
+---
+
+# Data Understanding
+
+Foi utilizado um conjunto de dados que  consiste no preço de cada hotel em  Paris e uma série de características.
+
+A informação corresponde a uma  estadia normal de uma noite para duas  pessoas.
+
+Como o período em causa é tão  invulgar serão apenas analisados dados  atuais, não tendo em conta dados  temporais como a sazonalidade.
+
+Os dados utilizados para a realização  deste modelo são retirados do site da  booking.com. Uma vez que este não é o  site oficial de cada hotel, podem existir  descontos e promoções oferecidas  exclusivamente nesta plataforma.
+
+---
+
+# Data Understanding
+
+Preditores potenciais:
+
+- classificação de estrelas
+
+- distância ao centro da cidade (km)
+
+- score médio das reviews
+
+- número de reviews
+
+- número de quartos restantes
+
+- pequeno-almoço incluído no preço
+
+- cancelamento gratuito
+
+
+---
+
+# Data Understanding
+
+Um estudo feito sobre os preços de  quartos de hotel em Paris, baseado na abordagem hedónica de preços  (Meahan, 2016), mostrou que a  classificação por estrelas e a  classificação do hotel desempenhavam  um papel fundamental na determinação  dos preços dos quartos, ou seja, quanto  maior estes atributos, maior será o  preço do quarto.
+
+O estudo também mostrou que hotéis  mais afastados do centro de Paris estão  associados a preços mais baixos e que o  pequeno almoço incluído aumenta o  preço dos hotéis.
+
+Para além disso, as avaliações dos  usuários online têm impactos positivos  nos preços dos hotéis (Wang, X., Sun,  J., &amp; Wen, H. 2019).
+
+---
+
+# Web Scraping
+
+
+```r
+df &lt;- readRDS(file = "~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+```
+
+
+---
+
+# Data Preparation
+
+
+Total 1814 hospedagens (hotéis + propriedades), 16/04/2021-17/04/2021;
+
+`summary(df)`
+
+Remoção de duplicados .orange[(60)]
+
+`dupl_hotels &lt;- data.frame(df[duplicated(df$hotel_name),]$hotel_name)`
+
+`Print(dupl_hotels)`
+
+`df %&gt;% distinct(hotel_name, .keep_all = TRUE)`
+  
+Conversão variáveis categóricas para escala `[0:1]`
+
+Pequeno almoço, cancelamento gratuito, quartos disponíveis *
+
+Identificação de Outliers – `price_eur`
+
+---
+
+# Data Preparation
+
+Total de 114 hospedagens removidas com base neste critério
+
+Eliminação das hospedagens  para dados `NA`
+
+Pequeno almoço, score, n reviews e pequeno almoço;
+
+Ex.: `df_temp[!is.na(df_temp$dist_center_km == "NA"),]`
+
+
+&lt;img src="https://i.imgur.com/fb40o9V.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 60%&gt;&lt;/img&gt;
+
+---
+
+# Data Preparation
+
+- Str/Correlação:
+
+
+```
+## 'data.frame':	1813 obs. of  16 variables:
+##  $ hotel_name      : chr  "Le Temple De Jeanne" "MEININGER Hotel Paris Porte de Vincennes" "Novotel Paris Porte Versailles" "Hotel Celtic" ...
+##  $ price_eur       : num  123 84 155 82 115 80 39 52 76 90 ...
+##  $ name_control    : chr  "Le Temple De Jeanne" "MEININGER Hotel Paris Porte de Vincennes" "Novotel Paris Porte Versailles" "Hotel Celtic" ...
+##  $ price_control   : num  123 84 155 82 115 80 39 52 76 90 ...
+##  $ dist_center_km  : num  0.7 4.8 5 2.5 5 2.4 4.5 5 3.6 1.9 ...
+##  $ score           : num  8.9 8.2 8.9 6.7 8.1 7.4 6.3 6.6 8.9 8 ...
+##  $ n_reviews       : num  305 1889 70 1161 1876 ...
+##  $ breakfast       : chr  "No" "No" "No" "No" ...
+##  $ free_cancelation: chr  "Yes" "Yes" "Yes" "Yes" ...
+##  $ n_rooms_left    : int  6 NA NA 4 NA 4 NA NA NA NA ...
+##  $ hotel_id        : chr  "59025" "5163757" "5538859" "330178" ...
+##  $ hotel_coord     : chr  "2.36022859811783,48.8551725227304" "2.36022859811783,48.8551725227304" "2.36022859811783,48.8551725227304" "2.36022859811783,48.8551725227304" ...
+##  $ n_stars_control : chr  "Sem Classificação" "Sem Classificação" "Sem Classificação" "Sem Classificação" ...
+##  $ link_url        : chr  "https://www.booking.com/hotel/fr/pointe-rivoli.en-gb.html?label=gen173nr-1FCAQoggI49gNIM1gEaLsBiAEBmAEJuAEKyAEF"| __truncated__ "https://www.booking.com/hotel/fr/meininger-paris-porte-de-vincennes.en-gb.html?label=gen173nr-1FCAQoggI49gNIM1g"| __truncated__ "https://www.booking.com/hotel/fr/novotel-paris-pte-versailles.en-gb.html?label=gen173nr-1FCAQoggI49gNIM1gEaLsBi"| __truncated__ "https://www.booking.com/hotel/fr/celtic-paris.en-gb.html?label=gen173nr-1FCAQoggI49gNIM1gEaLsBiAEBmAEJuAEKyAEF2"| __truncated__ ...
+##  $ n_stars         : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ prop_type       : chr  "Hotel" "Hotel" "Hotel" "Hotel" ...
+```
+---
+
+# Data Preparation
+
+&lt;img src="https://i.imgur.com/xSakJ5D.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+---
+
+# Data Preparation
+
+&lt;img src="https://i.imgur.com/EC6PKDl.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+
+---
+
+# Data Preparation
+
+&lt;img src="https://i.imgur.com/hIBc8kI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+---
+
+# Data Preparation
+
+&lt;img src="https://i.imgur.com/Em3kzyN.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+- Base ao final da etapa de pré-processamento: **1556** propriedades
+
+---
+
+# Regressão Linear Múltipla
+
+- Aprendizagem supervisionada – RLM
+  - RLS descartada pela baixa correlação entre a variável alvo e as preditoras;
+
+--
+
+- Dois tipos diferentes: maior R2, comparação, 
+  - RLM-ALL: todas variáveis preditoras
+  - RLM-4: quatro variáveis preditoras com maior variância
+
+--
+
+- Definição dos conjuntos de treino (75%) e de teste  (25%)
+
+---
+
+# Regressão Linear Múltipla
+
+| Variáveis preditoras  | Modelo 1 | Modelo 2 |
+|-----------------------|----------|----------|
+| Distância ao centro   | ✔        | ✔        |
+| Score                 | ✔        | ✔        |
+| Nº reviews            | ✔        | ✔        |
+| Pequeno-almoço        | ✔        | ❌        |
+| Cancelamento gratuito | ✔        | ❌        |
+| Quartos disponíveis   | ✔        | ❌        |
+| Nº estrelas           | ✔        | ✔        |
+
+---
+
+# Regressão Linear Múltipla
+
+Todas as preditoras a serem utilizadas (`RLM-ALL`)
+
+`model_mult1 &lt;- lm(formula = price_eur ~ ., data = train_1)`
+
+Conjunto treino (75%): 
+
+`\(R^2 = 0.27\)` 
+
+`\(RMSE = 58.511\)`
+
+`\(MSE = 3423.595\)` 
+
+`\(MAE = 1.881348e-15\)`
+
+Conjunto teste (25%): 
+
+`\(RMSE = 56.598\)` 
+
+`\(MSE = 3203.279\)` 
+
+`\(MAE = 44.448\)`
+
+---
+
+# Regressão Linear Múltipla
+
+&lt;img src="https://i.imgur.com/KUmRlrP.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+# Regressão Linear Múltipla
+
+&lt;img src="https://i.imgur.com/Y3zjLT5.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+# Regressão Linear Múltipla
+
+Quatro v.i.'s (`RLM-4`)
+
+`model_mult2 &lt;- lm(formula = price_eur ~ dist_center_km + score + n_reviews + n_stars, data = train_1)`
+
+Conjunto treino (75%): 
+
+`\(R^2 = 0.25\)`
+
+`\(RMSE = 59.293\)`
+
+`\(MSE = 3515.605\)` 
+
+`\(MAE = 1.509168e-15\)`
+
+
+Conjunto teste (25%): 
+
+`\(RMSE = 56.969\)`
+
+`\(MSE = 3245.506\)`
+
+`\(MAE = 44.841\)`
+
+---
+
+# Regressão Linear Múltipla
+
+&lt;img src="https://i.imgur.com/fpF0MAb.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+# Regressão Linear Múltipla
+
+&lt;img src="https://i.imgur.com/D0Yop3O.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+# Redes Neuronais
+
+- NN: Normalização dos dados escala [0:1];
+
+`function(x){(x-min(x))/(max(x)-min(x))}`
+
+- Modelo proposto:
+
+  - 8 variáveis preditoras;
+
+  - Função de ativação logística (act.fct);
+
+  - Função para o cálculo do erro (err.fct) definida pelo desvio padrão do erro (sse);
+
+  - 12 neurónios;
+
+- Conjunto treino (75%) e teste (25%)
+
+---
+
+# Redes Neuronais
+
+&lt;img src="https://i.imgur.com/k0tKcz1.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+
+---
+
+# Redes Neuronais
+
+&lt;img src="https://i.imgur.com/oRBFzXM.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão
+
+Para uma segunda análise, foi criado um modelo de árvore de decisão para prever o preço do hotel, com base nas variáveis preditoras, score, distância ao centro da cidade, se o pequeno  almoço é incluído, número de estrelas, número  de reviews, número de quartos restantes no hotel e se o cancelamento é gratuito, considerando conjuntos Treino (25%) e Teste  (75%).
+
+A árvore definiu como principal variável  explicativa dos preços dos hotéis a variável  número de estrelas.
+
+&lt;img src="https://i.imgur.com/B3jElBX.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%&gt;&lt;/img&gt;
+
+---
+
+
+# Árvores de Decisão
+
+
+&lt;img src="https://i.imgur.com/uluxQcq.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 100%&gt;&lt;/img&gt;
+
+
+
+---
+
+# Árvores de Decisão
+
+## Poda
+
+&lt;img src="https://i.imgur.com/c2x8sBA.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+&lt;img src="https://i.imgur.com/Y1FD4bp.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 80%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão
+
+## Validação cruzada
+
+&lt;img src="https://i.imgur.com/HbPTgXJ.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+
+---
+
+# Árvores de Decisão
+
+## Importância das variáveis
+
+&lt;img src="https://i.imgur.com/mjrC3Ck.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão: Bagging
+
+&lt;img src="https://i.imgur.com/gDbGOAa.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão: Bagging
+
+## Importância das variáveis
+
+&lt;img src="https://i.imgur.com/5eiTFPU.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+
+---
+
+# Árvores de Decisão: Florestas Aleatórias
+
+&lt;img src="https://i.imgur.com/JUOIif9.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão: Florestas Aleatórias
+
+## Importância das variáveis
+
+&lt;img src="https://i.imgur.com/qy6Pi7f.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão: Boosting
+
+&lt;img src="https://i.imgur.com/79mFIpT.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+---
+
+# Árvores de Decisão: Boosting
+
+## Importância das variáveis
+
+&lt;img src="https://i.imgur.com/m49LaZb.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%&gt;&lt;/img&gt;
+
+
+---
+
+# Investigação atual
+
+
+
+.panelset[
+.panel[.panel-name[R Code]
+
+
+```r
+pacman::p_load(ggstatsplot,magrittr)
+df &lt;- readRDS("~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+reg_m &lt;- lm(formula = price_eur ~ dist_center_km + score + n_reviews + breakfast + free_cancelation + n_rooms_left + n_stars,data = df)
+ggcoefstats(x = reg_m)
+```
+]
+
+.panel[.panel-name[Output]
+.center[
+![](slides_files/figure-html/panel-chunk-1.png)
+]
+]
+
+.panel[.panel-name[Análise Estatística]
+
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+
+Modelos preditivos.
+
+]
+
+.panel[.panel-name[Resultados]
+
+
+
+
+.tr[📜 refs... ]
+
+]]]
+
+---
+
+# Avaliação dos resultados
+
+- Detalhamento das informações extraídas a partir do scraping e, eventualmente, a obtenção de variáveis preditoras;
+- Satisfatória aplicação da aprendizagem supervisionada: 
+- RLM-ALL x RLM-4: baixa explicação da variabilidade dos preços, ruído, proximidade com âlguns parâmetros da BD final;
+- Insuficiente para tartar valores extremos, valores negativos no mínimo; 
+
+&lt;img src="https://i.imgur.com/J26JkaI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+---
+
+# Avaliação dos resultados
+
+- Promissora utilização das Redes Neuronais (NN):
+  - Limitações téoricas;
+  - Resultados mais robusto e melhor integração das variáveis preditoras;
+
+
+
+- Modelo Árvore de Decisão – Florestas Aleatórias: 
+  - Fácil visualização
+  - Panorama de preços dos hotéis
+  - Margem de erro de 38.90 EUR
+  
+&lt;img src="https://i.imgur.com/NrydcBP.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%&gt;&lt;/img&gt;
+
+
+
+---
+
+# Avaliação dos resultados
+
+Influência dos preços das propriedades no conjunto de dados.
+
+A segmentação poderá ser precisa em novos estudos.
+
+Técnicas supervisionadas ou não supervisionadas, para a identificação e classificação (tipo de propriedade) consoante as mesmas variáveis obtidas.
+
+Impacto causado pela crise do COVID-19 na economia de forma geral e, em especial, no setor do turismo.
+
+Incerteza e instabilidade dos preços. 
+
+Possibilidade de restrições
+
+Importância do fator sazonalidade nas oscilações dos preços no setor do turismo / Dados longitudinais;
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 80px;
+height: 128px;
+z-index: 0;
+background-image: url(img/ibs_logo.png);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+
+---
+
+class: center, bottom, inverse
+
+# Mais info
+
+--
+
+Slides criados através do pacote _R_ [`xaringan`](https://github.com/yihui/xaringan).
+
+--
+
+Ana Sucena
+
+--
+
+Felipe Amaral
+
+--
+
+Jorge Sinval
+
+--
+
+.
+
+--
+
+_In God we trust, all others bring data_
+
+--
+
+Edwards Deming
+
+--
+
+.
+
+--
+
+.
+
+--
+
+.
+
+--
+
+THE END
+
+---
+class: center, bottom, inverse
+
+![:scale 85%](gif/the_end.gif)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="js/macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"ratio": "4:3",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"slideNumberFormat": "<div class=\"progress-bar-container\">\n  <div class=\"progress-bar\" style=\"width: calc(%current% / %total% * 100%);\">\n  </div>\n</div>"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

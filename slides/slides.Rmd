@@ -1,0 +1,684 @@
+---
+title: "Previsão do preços de hotéis em Paris"
+subtitle: "Metodologias e Tecnologias para Ciência de Dados | Modelos de Previsão"
+author: "Ana Sucena, Felipe Amaral, & Jorge Sinval"
+date: "`r Sys.Date()`"
+output: 
+  xaringan::moon_reader:
+    css: [default, "css/metropolis.css", "css/metropolis-fonts.css"] #defalt colar isto ["default", "default-fonts", "css/custom-intro.css"] # ver o tema metropolis https://danilofreire.github.io/xaringan-metropolis/xaringan-metropolis.html#1 
+    mathjax: "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+    nature: 
+      beforeInit: "js/macros.js"
+      highlightStyle: github
+      ratio: 4:3
+      highlightLines: true
+      countIncrementalSlides: false
+      slideNumberFormat: |
+        <div class="progress-bar-container">
+          <div class="progress-bar" style="width: calc(%current% / %total% * 100%);">
+          </div>
+        </div>
+---
+
+<style>
+
+.remark-slide-number {
+  position: inherit;
+}
+
+.remark-slide-number .progress-bar-container {
+  position: absolute;
+  bottom: 0;
+  height: 6px;
+  display: block;
+  left: 0;
+  right: 0;
+}
+
+.remark-slide-number .progress-bar {
+  height: 100%;
+  background-color: #0f4c81;
+}
+
+.orange {
+  color: #EB811B;
+}
+</style>
+
+# Estrutura
+
+- Introdução
+
+--
+
+- _Business Understanding_
+
+--
+
+- _Data preparation_
+
+--
+
+- Data Analysis
+  
+  . Regressão Linear Múltipla
+  
+  . Redes Neuronais
+  
+  . Árvores de decisão
+  
+--
+
+- Avaliação dos resultados
+
+---
+
+# Introdução
+
+## Objetivo
+
+**A prever os preços dos hotéis em Paris na estadia de uma noite de dia 16 para 17 de abril de 2021 (utilizando o CRISP-DM).**
+
+--
+
+1. análise do setor turismo de uma forma geral e mais detalhada para a cidade de Paris.
+
+--
+
+2. análise dos dados em questão, nomeadamente quais as variáveis que podem influenciar o problema e a sua descrição.
+
+--
+
+3. data preparation: web scrapping e limpeza de dados.
+
+--
+
+4. redes neuronais e  modelos de previsão,  nomeadamente usando a  regressão linear múltipla e  árvores de decisão.
+
+--
+
+5. valiação dos modelos criados e seus  resultados, apresentando as  limitações que surgiram em fases anteriores
+
+
+---
+
+# Business Understanding
+
+Nos últmos anos assistimos a um aumento de canais de  venda online , sendo o Booking.com a maior no mercado  de agências de viagens online europeias (OTA), com uma  participação de mercado de 67,7% em 2019.
+
+--
+
+Existem vários fatores econômicos determinantes  para a escolha de um quarto. O objetivo do hotel, ao  determinar os preços dos quartos é atingir um  equilíbrio para maximizar o lucro
+
+--
+
+A teoria de preços hedónicos (Lancaster, 1966; Rosen, 1974) diz que o preço de um  produto pode ser considerado uma função das  suas características que afetam a utilidade  para o consumidor
+
+
+---
+
+# Business Understanding
+
+Existem vários fatores que podem  influenciar o preço de um quarto  de hotel:
+- a localização do hotel,
+- as comodidades nos quartos  do hotel,
+- a disponibilidade de
+- restaurantes perto do hotel,  a disponibilidade de  estacionamento,
+- a reputação do
+- estabelecimento,
+- os níveis de limpeza e  segurança
+- ...
+
+
+---
+
+# Business Understanding
+
+## Paris
+
+A  capital francesa encontra-se	entre os destinos mais visitados da Europa, com turistas internacionais a gastar mais de 10 bilhões de dólares por ano.
+
+--
+
+Em 2016, este setor contribuiu com 198,3 bilhões de euros para a  economia francesa e criou 2,8 bilhões de empregos, direta e indiretamente.
+
+--
+
+Em 2018, França contou com um total de 89,4 milhões de visitantes  (aumentou 3% em relação a 2017), sendo que Paris teve mais de 40 milhões  de visitantes. Em 2018 o país tinha como meta, 100 milhões de turistas  estrangeiros  em 2020.
+
+--
+
+Na última década França sofreu vários ataques terroristas o que não é  favorável ao turismo. Mais grave está a ser o período de pandemia.De  acordo com um relatório da ADN Tourisme, apenas 53% dos residentes  franceses foram de férias em julho e agosto, em comparação com 71% em  2019. Mas 94% dos que viajaram foi dentro do próprio país, dando um  impulso ao setor do turismo. O estudo constatou que os turistas franceses  optam cada vez mais por casas de aluguer de temporada, que oferecem  maior privacidade e parecem mais seguras em termos de saneamento. Hotéis  e acampamentos com instalações compartilhadas foram menos populares.
+
+---
+
+# Data Understanding
+
+Foi utilizado um conjunto de dados que  consiste no preço de cada hotel em  Paris e uma série de características.
+
+A informação corresponde a uma  estadia normal de uma noite para duas  pessoas.
+
+Como o período em causa é tão  invulgar serão apenas analisados dados  atuais, não tendo em conta dados  temporais como a sazonalidade.
+
+Os dados utilizados para a realização  deste modelo são retirados do site da  booking.com. Uma vez que este não é o  site oficial de cada hotel, podem existir  descontos e promoções oferecidas  exclusivamente nesta plataforma.
+
+---
+
+# Data Understanding
+
+Preditores potenciais:
+
+- classificação de estrelas
+
+- distância ao centro da cidade (km)
+
+- score médio das reviews
+
+- número de reviews
+
+- número de quartos restantes
+
+- pequeno-almoço incluído no preço
+
+- cancelamento gratuito
+
+
+---
+
+# Data Understanding
+
+Um estudo feito sobre os preços de  quartos de hotel em Paris, baseado na abordagem hedónica de preços  (Meahan, 2016), mostrou que a  classificação por estrelas e a  classificação do hotel desempenhavam  um papel fundamental na determinação  dos preços dos quartos, ou seja, quanto  maior estes atributos, maior será o  preço do quarto.
+
+O estudo também mostrou que hotéis  mais afastados do centro de Paris estão  associados a preços mais baixos e que o  pequeno almoço incluído aumenta o  preço dos hotéis.
+
+Para além disso, as avaliações dos  usuários online têm impactos positivos  nos preços dos hotéis (Wang, X., Sun,  J., & Wen, H. 2019).
+
+---
+
+# Web Scraping
+
+```{r}
+df <- readRDS(file = "~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+```
+
+
+---
+
+# Data Preparation
+
+
+Total 1814 hospedagens (hotéis + propriedades), 16/04/2021-17/04/2021;
+
+`summary(df)`
+
+Remoção de duplicados .orange[(60)]
+
+`dupl_hotels <- data.frame(df[duplicated(df$hotel_name),]$hotel_name)`
+
+`Print(dupl_hotels)`
+
+`df %>% distinct(hotel_name, .keep_all = TRUE)`
+  
+Conversão variáveis categóricas para escala `[0:1]`
+
+Pequeno almoço, cancelamento gratuito, quartos disponíveis *
+
+Identificação de Outliers – `price_eur`
+
+---
+
+# Data Preparation
+
+Total de 114 hospedagens removidas com base neste critério
+
+Eliminação das hospedagens  para dados `NA`
+
+Pequeno almoço, score, n reviews e pequeno almoço;
+
+Ex.: `df_temp[!is.na(df_temp$dist_center_km == "NA"),]`
+
+
+<img src="https://i.imgur.com/fb40o9V.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 60%></img>
+
+---
+
+# Data Preparation
+
+- Str/Correlação:
+
+```{r echo=FALSE}
+str(df)
+```
+---
+
+# Data Preparation
+
+<img src="https://i.imgur.com/xSakJ5D.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+---
+
+# Data Preparation
+
+<img src="https://i.imgur.com/EC6PKDl.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+
+---
+
+# Data Preparation
+
+<img src="https://i.imgur.com/hIBc8kI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+---
+
+# Data Preparation
+
+<img src="https://i.imgur.com/Em3kzyN.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+- Base ao final da etapa de pré-processamento: **1556** propriedades
+
+---
+
+# Regressão Linear Múltipla
+
+- Aprendizagem supervisionada – RLM
+  - RLS descartada pela baixa correlação entre a variável alvo e as preditoras;
+
+--
+
+- Dois tipos diferentes: maior R2, comparação, 
+  - RLM-ALL: todas variáveis preditoras
+  - RLM-4: quatro variáveis preditoras com maior variância
+
+--
+
+- Definição dos conjuntos de treino (75%) e de teste  (25%)
+
+---
+
+# Regressão Linear Múltipla
+
+| Variáveis preditoras  | Modelo 1 | Modelo 2 |
+|-----------------------|----------|----------|
+| Distância ao centro   | ✔        | ✔        |
+| Score                 | ✔        | ✔        |
+| Nº reviews            | ✔        | ✔        |
+| Pequeno-almoço        | ✔        | ❌        |
+| Cancelamento gratuito | ✔        | ❌        |
+| Quartos disponíveis   | ✔        | ❌        |
+| Nº estrelas           | ✔        | ✔        |
+
+---
+
+# Regressão Linear Múltipla
+
+Todas as preditoras a serem utilizadas (`RLM-ALL`)
+
+`model_mult1 <- lm(formula = price_eur ~ ., data = train_1)`
+
+Conjunto treino (75%): 
+
+$R^2 = 0.27$ 
+
+$RMSE = 58.511$
+
+$MSE = 3423.595$ 
+
+$MAE = 1.881348e-15$
+
+Conjunto teste (25%): 
+
+$RMSE = 56.598$ 
+
+$MSE = 3203.279$ 
+
+$MAE = 44.448$
+
+---
+
+# Regressão Linear Múltipla
+
+<img src="https://i.imgur.com/KUmRlrP.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+# Regressão Linear Múltipla
+
+<img src="https://i.imgur.com/Y3zjLT5.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+# Regressão Linear Múltipla
+
+Quatro v.i.'s (`RLM-4`)
+
+`model_mult2 <- lm(formula = price_eur ~ dist_center_km + score + n_reviews + n_stars, data = train_1)`
+
+Conjunto treino (75%): 
+
+$R^2 = 0.25$
+
+$RMSE = 59.293$
+
+$MSE = 3515.605$ 
+
+$MAE = 1.509168e-15$
+
+
+Conjunto teste (25%): 
+
+$RMSE = 56.969$
+
+$MSE = 3245.506$
+
+$MAE = 44.841$
+
+---
+
+# Regressão Linear Múltipla
+
+<img src="https://i.imgur.com/fpF0MAb.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+# Regressão Linear Múltipla
+
+<img src="https://i.imgur.com/D0Yop3O.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+# Redes Neuronais
+
+- NN: Normalização dos dados escala [0:1];
+
+`function(x){(x-min(x))/(max(x)-min(x))}`
+
+- Modelo proposto:
+
+  - 8 variáveis preditoras;
+
+  - Função de ativação logística (act.fct);
+
+  - Função para o cálculo do erro (err.fct) definida pelo desvio padrão do erro (sse);
+
+  - 12 neurónios;
+
+- Conjunto treino (75%) e teste (25%)
+
+---
+
+# Redes Neuronais
+
+<img src="https://i.imgur.com/k0tKcz1.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+
+---
+
+# Redes Neuronais
+
+<img src="https://i.imgur.com/oRBFzXM.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+# Árvores de Decisão
+
+Para uma segunda análise, foi criado um modelo de árvore de decisão para prever o preço do hotel, com base nas variáveis preditoras, score, distância ao centro da cidade, se o pequeno  almoço é incluído, número de estrelas, número  de reviews, número de quartos restantes no hotel e se o cancelamento é gratuito, considerando conjuntos Treino (25%) e Teste  (75%).
+
+A árvore definiu como principal variável  explicativa dos preços dos hotéis a variável  número de estrelas.
+
+<img src="https://i.imgur.com/B3jElBX.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 63%></img>
+
+---
+
+
+# Árvores de Decisão
+
+
+<img src="https://i.imgur.com/uluxQcq.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 100%></img>
+
+
+
+---
+
+# Árvores de Decisão
+
+## Poda
+
+<img src="https://i.imgur.com/c2x8sBA.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+<img src="https://i.imgur.com/Y1FD4bp.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 80%></img>
+
+---
+
+# Árvores de Decisão
+
+## Validação cruzada
+
+<img src="https://i.imgur.com/HbPTgXJ.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+
+---
+
+# Árvores de Decisão
+
+## Importância das variáveis
+
+<img src="https://i.imgur.com/mjrC3Ck.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+---
+
+# Árvores de Decisão: Bagging
+
+<img src="https://i.imgur.com/gDbGOAa.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+---
+
+# Árvores de Decisão: Bagging
+
+## Importância das variáveis
+
+<img src="https://i.imgur.com/5eiTFPU.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+
+---
+
+# Árvores de Decisão: Florestas Aleatórias
+
+<img src="https://i.imgur.com/JUOIif9.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+---
+
+# Árvores de Decisão: Florestas Aleatórias
+
+## Importância das variáveis
+
+<img src="https://i.imgur.com/qy6Pi7f.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+---
+
+# Árvores de Decisão: Boosting
+
+<img src="https://i.imgur.com/79mFIpT.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+---
+
+# Árvores de Decisão: Boosting
+
+## Importância das variáveis
+
+<img src="https://i.imgur.com/m49LaZb.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 70%></img>
+
+
+---
+
+# Investigação atual
+
+```{r xaringan-panelset, echo=FALSE, message=F,warning=F}
+xaringanExtra::use_panelset()
+xaringanExtra::style_panelset(panel_tab_color_active = "red")
+```
+
+.panelset[
+.panel[.panel-name[R Code]
+
+```{r panel-chunk, fig.show='hide', fig.align = "center", fig.dim=c(5, 3),fig.retina=3, out.width="100%", message=F,warning=F}
+pacman::p_load(ggstatsplot,magrittr)
+df <- readRDS("~/MSc in Data Science/Data Science Methodologies and Technologies/df_all.rds")
+reg_m <- lm(formula = price_eur ~ dist_center_km + score + n_reviews + breakfast + free_cancelation + n_rooms_left + n_stars,data = df)
+ggcoefstats(x = reg_m)
+```
+]
+
+.panel[.panel-name[Output]
+.center[
+![](`r knitr::fig_chunk("panel-chunk", ".png")`)
+]
+]
+
+.panel[.panel-name[Análise Estatística]
+```{r xaringan-tachyons_t_test_stat_analysis, echo=FALSE, message=F,warning=F}
+xaringanExtra::use_tachyons()
+```
+
+.bg-washed-green.b--dark-green.ba.bw2.br3.shadow-5.ph4.mt5[
+
+Modelos preditivos.
+
+]
+
+.panel[.panel-name[Resultados]
+```{r xaringan-tachyons_t_test_results, echo=FALSE, message=F,warning=F}
+xaringanExtra::use_tachyons()
+```
+
+
+
+.tr[`r emo::ji("scroll")` refs... ]
+
+]]]
+
+---
+
+# Avaliação dos resultados
+
+- Detalhamento das informações extraídas a partir do scraping e, eventualmente, a obtenção de variáveis preditoras;
+
+--
+
+- Satisfatória aplicação da aprendizagem supervisionada:
+
+--
+
+  - RLM-ALL x RLM-4: baixa explicação da variabilidade dos preços, ruído, proximidade com âlguns parâmetros da BD final;
+  - Insuficiente para tartar valores extremos, valores negativos no mínimo; 
+
+<img src="https://i.imgur.com/J26JkaI.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+---
+
+# Avaliação dos resultados
+
+- Promissora utilização das Redes Neuronais (NN):
+
+  - Limitações téoricas;
+  - Resultados mais robusto e melhor integração das variáveis preditoras;
+
+
+
+--
+
+
+- Modelo Árvore de Decisão – Florestas Aleatórias: 
+  - Fácil visualização
+  - Panorama de preços dos hotéis
+  - Margem de erro de 38.90 EUR
+  
+<img src="https://i.imgur.com/NrydcBP.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 50%></img>
+
+
+
+---
+
+# Avaliação dos resultados
+
+- Influência dos preços das propriedades no conjunto de dados. A segmentação poderá ser precisa em novos estudos.
+
+  - Técnicas supervisionadas ou não supervisionadas, para a identificação e classificação (tipo de propriedade) consoante as mesmas variáveis obtidas.
+
+- Impacto causado pela crise do COVID-19 na economia de forma geral e, em especial, no setor do turismo.
+  - Incerteza e instabilidade dos preços. 
+  - Possibilidade de restrições
+
+- Importância do fator sazonalidade nas oscilações dos preços no setor do turismo / Dados longitudinais;
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(knitr.table.format = "html")
+knitr::opts_chunk$set(fig.retina=2, out.width="100%", warning = FALSE, message = FALSE)
+```
+
+
+```{r xaringan-logo, echo=FALSE}
+xaringanExtra::use_logo(image_url = "img/ibs_logo.png", width = "80px")
+```
+
+
+```{r xaringan-tile-view, echo=FALSE}
+#overview
+xaringanExtra::use_tile_view()
+```
+
+---
+
+class: center, bottom, inverse
+
+# Mais info
+
+--
+
+Slides criados através do pacote _R_ [`xaringan`](https://github.com/yihui/xaringan).
+
+--
+
+Ana Sucena
+
+--
+
+Felipe Amaral
+
+--
+
+Jorge Sinval
+
+--
+
+.
+
+--
+
+_In God we trust, all others bring data_
+
+--
+
+Edwards Deming
+
+--
+
+.
+
+--
+
+.
+
+--
+
+.
+
+--
+
+THE END
+
+---
+class: center, bottom, inverse
+
+![:scale 85%](gif/the_end.gif)

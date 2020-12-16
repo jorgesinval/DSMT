@@ -1,0 +1,24 @@
+.remark-slide-content:not(.title-slide){
+  background-image: url("/img/ibs_logo.png")
+  background-size: 100px
+  background-position: 100% 0%
+  padding-left: 100px;
+  layout: true
+  
+}
+
+.remark-slide-number{
+  top: 92%;
+  bottom: inherit;
+}
+
+.title-slide{
+  background-image: url("../img/language-brain.jpg");
+  background-position: 53% 98%;
+  background-size: 330px;
+  padding-left: 100px;
+}
+
+body{
+font-family: 'Futura Serif', Palatino, serif;
+}

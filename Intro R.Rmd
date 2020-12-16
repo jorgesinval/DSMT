@@ -1,0 +1,77 @@
+---
+title: 'Classes: Data Science Methodologies and Technologies'
+author: "Sinval, J."
+date: "9/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introdução ao R
+
+**28-09-2020**
+
+Tipo de variáveis
+
+Numeric/double
+
+```{r}
+idade <- 20
+typeof(idade)
+```
+
+Inteiro
+
+```{r}
+idade <- 20L #utiliza-se o L para indicar um número inteiro
+```
+
+Character
+
+```{r}
+idade <- "20 anos" #as aspas indicam um conjunto de letras/números
+```
+
+Factor
+
+```{r}
+x <- factor(c("single", "married", "single", "married"), levels = c("single","married","widowed"),)
+typeof(x)
+```
+
+Vector
+
+```{r}
+#criar vectors
+v1 <- 1:3
+v2 <- 1:3
+#comparação
+v1==v2
+```
+
+Matrix
+
+```{r}
+mat <- matrix(nrow = 3,ncol = 4)
+mat # NAs
+```
+
+Example
+
+```{r}
+df <- read.csv("https://covid.ourworldindata.org/data/owid-covid-data.csv",stringsAsFactors = T)
+
+summary(df)
+
+skimr::skim(df)
+
+#outro exemplo
+file <- "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
+df <- read.csv(file)
+skimr::skim(df)
+
+
+```
+

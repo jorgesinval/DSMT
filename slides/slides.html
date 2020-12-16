@@ -58,19 +58,23 @@ class: center, middle, inverse, title-slide
 
 --
 
-- _Business Understanding_
+- Business understanding
 
 --
 
-- _Data preparation_
+- Web scrapping
 
 --
 
-- Data Analysis
+- Data preparation
+
+--
+
+- Data analysis
   
-  . Regressão Linear Múltipla
+  . Regressão linear múltipla
   
-  . Redes Neuronais
+  . Redes neuronais
   
   . Árvores de decisão
   
@@ -144,7 +148,7 @@ De facto, a segurança é uma das principais prioridades quando os turistas re
 
 --
 
-A sazonalidade também é um fator bastante importante no que toca a oscilações de precos, assom como a diferença entre dias de semana e fins de semana, feriados e dias “especiais”. Para além das épocas de saldos e dias como a Black Friday onde se verifica uma grande redução dos preços. 
+A sazonalidade também é um fator bastante importante no que toca a oscilações de preços, assim como a diferença entre dias de semana e fins de semana, feriados e dias "especiais". Para a além das épocas de saldos e dias como a Black Friday onde se verifica uma grande redução dos preços.
 
 
 ---
@@ -239,7 +243,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,
               corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
 
-{{city_code_booking &lt;- "-1456928"}} #Paris
+*city_code_booking &lt;- "-1456928" #Paris
 
 *"dia checkin"
 checkin_day &lt;- 16
@@ -272,6 +276,80 @@ Estratégia:
   - ciclos de extração por nível de classificação
   - o mesmo processo para o tipo de propriedade (hotel vs. apartamento)
   - fundir bases numa só (i.e. `df.rds`)
+
+---
+
+# Web Scraping
+
+## Inspeção do URL
+
+Forma genérica:
+
+
+
+
+
+```r
+url &lt;- paste0(
+  "https://www.booking.com/searchresults.html?checkin_month=",checkin_month,
+  "&amp;checkin_monthday=",checkin_day,
+  "&amp;checkin_year=",checkin_year,
+  "&amp;checkout_month=",checkout_month,
+  "&amp;checkout_monthday=",checkout_day,
+  "&amp;checkout_year=",checkout_year,
+  "&amp;city=",city_code_booking,
+  "&amp;group_adults=2&amp;nflt=class%3D",i,"%3B",
+  "&amp;order=distance_from_search")
+```
+
+---
+
+# Web scraping
+
+Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
+
+&lt;img src="https://i.imgur.com/5T2TFxK.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 100%&gt;&lt;/img&gt;
+
+
+---
+
+# Web Scraping
+
+## Inspeção do HTML
+
+Forma genérica das nodes a extrair:
+
+
+```r
+page &lt;- url %&gt;% read_html()
+
+elem_list &lt;- page %&gt;%
+  html_nodes(
+    ".sr_room_reinforcement:nth-child(1),
+    .sr_rooms_left_wrap,
+    .e2e-free-cancellation,
+    .sr_card_address_line :nth-child(3),
+    .bui-price-display__value,
+    .bui-review-score__badge,
+    .bui-review-score__text,
+    .sr-hotel__name,
+    .bui-rating--smaller
+    .bui-review-score__title
+    .sr-hotel__title-badges")
+```
+
+---
+
+# Web Scraping
+
+## Inspeção do HTML
+
+
+
+
+---
+
+# Web Scraping
 
 ---
 
@@ -795,6 +873,7 @@ class: center, bottom, inverse
 "highlightStyle": "github",
 "ratio": "4:3",
 "highlightLines": true,
+"highlightSpans": true,
 "countIncrementalSlides": false,
 "slideNumberFormat": "<div class=\"progress-bar-container\">\n  <div class=\"progress-bar\" style=\"width: calc(%current% / %total% * 100%);\">\n  </div>\n</div>"
 });

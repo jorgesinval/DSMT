@@ -12,6 +12,7 @@ output:
       highlightStyle: github
       ratio: 4:3
       highlightLines: true
+      highlightSpans: true
       countIncrementalSlides: false
       slideNumberFormat: |
         <div class="progress-bar-container">
@@ -51,19 +52,23 @@ output:
 
 --
 
-- _Business Understanding_
+- Business understanding
 
 --
 
-- _Data preparation_
+- Web scrapping
 
 --
 
-- Data Analysis
+- Data preparation
+
+--
+
+- Data analysis
   
-  . Regressão Linear Múltipla
+  . Regressão linear múltipla
   
-  . Redes Neuronais
+  . Redes neuronais
   
   . Árvores de decisão
   
@@ -137,7 +142,7 @@ De facto, a segurança é uma das principais prioridades quando os turistas re
 
 --
 
-A sazonalidade também é um fator bastante importante no que toca a oscilações de precos, assom como a diferença entre dias de semana e fins de semana, feriados e dias “especiais”. Para além das épocas de saldos e dias como a Black Friday onde se verifica uma grande redução dos preços. 
+A sazonalidade também é um fator bastante importante no que toca a oscilações de preços, assim como a diferença entre dias de semana e fins de semana, feriados e dias "especiais". Para a além das épocas de saldos e dias como a Black Friday onde se verifica uma grande redução dos preços.
 
 
 ---
@@ -227,13 +232,13 @@ Em relação às características “restam x quartos para reserva” e “cance
 df <- readRDS(file = "~/MSc in Data Science/DSMT/df_all.rds")
 ```
 
-```{r eval=F}
+```{r eval =F}
 #carregar pacote para fazer o webscraping
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,
               corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
 
-{{city_code_booking <- "-1456928"}} #Paris
+*city_code_booking <- "-1456928" #Paris
 
 {{"dia checkin"}}
 checkin_day <- 16
@@ -266,6 +271,94 @@ Estratégia:
   - ciclos de extração por nível de classificação
   - o mesmo processo para o tipo de propriedade (hotel vs. apartamento)
   - fundir bases numa só (i.e. `df.rds`)
+
+---
+
+# Web Scraping
+
+## Inspeção do URL
+
+Forma genérica:
+
+```{r echo=F, warning=FALSE,message=F}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(rvest, stringr, readr, dplyr, caret,tidyr,dplyr,plyr,
+              corrplot,neuralnet,MLmetrics,partykit,rpart,rpart.plot,ranger,gbm)
+
+city_code_booking <- "-1456928" #Paris
+
+checkin_day <- 16
+checkin_month <- 4
+checkin_year <- 2021
+checkout_day <- 17
+checkout_month <- 4
+checkout_year <- 2021
+i <- 0
+```
+
+
+```{r}
+url <- paste0(
+  "https://www.booking.com/searchresults.html?checkin_month=",checkin_month,
+  "&checkin_monthday=",checkin_day,
+  "&checkin_year=",checkin_year,
+  "&checkout_month=",checkout_month,
+  "&checkout_monthday=",checkout_day,
+  "&checkout_year=",checkout_year,
+  "&city=",city_code_booking,
+  "&group_adults=2&nflt=class%3D",i,"%3B",
+  "&order=distance_from_search")
+```
+
+---
+
+# Web scraping
+
+Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
+
+<img src="https://i.imgur.com/5T2TFxK.png" style=" display: block; margin-left: auto; margin-right: auto;" width = 100%></img>
+
+
+---
+
+# Web Scraping
+
+## Inspeção do HTML
+
+Forma genérica das nodes a extrair:
+
+```{r eval =F}
+page <- url %>% read_html()
+
+elem_list <- page %>%
+  html_nodes(
+    ".sr_room_reinforcement:nth-child(1),
+    .sr_rooms_left_wrap,
+    .e2e-free-cancellation,
+    .sr_card_address_line :nth-child(3),
+    .bui-price-display__value,
+    .bui-review-score__badge,
+    .bui-review-score__text,
+    .sr-hotel__name,
+    .bui-rating--smaller
+    .bui-review-score__title
+    .sr-hotel__title-badges")
+```
+
+---
+
+# Web Scraping
+
+## Inspeção do HTML
+
+```{r}
+
+```
+
+
+---
+
+# Web Scraping
 
 ---
 

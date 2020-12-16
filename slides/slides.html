@@ -301,7 +301,9 @@ url &lt;- paste0(
 
 ---
 
-# Web scraping
+# Web Scraping
+
+## Inspeção do HTML de uma página de resultados
 
 Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
 
@@ -312,7 +314,7 @@ Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
 
 # Web Scraping
 
-## Inspeção do HTML
+## Seleção dos elementos a extrair
 
 Forma genérica das nodes a extrair:
 
@@ -339,7 +341,7 @@ elem_list &lt;- page %&gt;%
 
 # Web Scraping
 
-## Inspeção do HTML
+## Seleção dos elementos a extrair
 
 .scroll-output[
 
@@ -502,12 +504,61 @@ elem_list &lt;- page %&gt;%
 
 # Web Scraping
 
+## Produção do código de extração:
+
+- Quebrar os elementos por cada aparição do símbolo `€`:
+
+
+```r
+*pos &lt;- grepl(x = raw_text,pattern = "€",fixed = T)
+```
+
+--
+
+- Obter o total de acomodações total:
+
+
+```r
+nrow(df)
+```
+
+```
+## [1] 1813
+```
+`&gt; 1000` ⚠️
+
+---
+
+# Web Scrapping
+
+## obter o total de acomodações por nível de classificação
+
+
+|number_stars      | number_stars_html| total| n_cicles|
+|:-----------------|-----------------:|-----:|--------:|
+|Sem Classificação |                 0|   228|       10|
+|1                 |                 1|    14|        1|
+|2                 |                 2|   111|        5|
+|3                 |                 3|   804|       33|
+|4                 |                 4|   493|       20|
+|5                 |                 5|    98|        4|
+
+---
+
+# Web Scraping
+
+  
+  - ciclos de extração por nível de classificação
+  - o mesmo processo para o tipo de propriedade (hotel vs. apartamento)
+  - fundir bases numa só (i.e. `df.rds`)
+
+
 ---
 
 # Data Preparation
 
 
-Total 1814 hospedagens (hotéis + propriedades), 16/04/2021-17/04/2021;
+Total `1814` propriedades (hotéis + apartamentos + outros tipos), 16/04/2021-17/04/2021;
 
 `summary(df)`
 

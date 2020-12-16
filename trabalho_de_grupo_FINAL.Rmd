@@ -21,7 +21,7 @@ Score médio de review de hóspedes
 
 Preço quarto 1 noite, 2 pessoas (o default que surge na paginação do Booking)
 
-Distância ao centro da cidade
+Distância ao centro da cidadef
 
 Se é com pequeno almoço incluído
 

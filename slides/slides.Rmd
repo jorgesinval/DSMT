@@ -312,7 +312,9 @@ url <- paste0(
 
 ---
 
-# Web scraping
+# Web Scraping
+
+## Inspeção do HTML de uma página de resultados
 
 Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
 
@@ -323,7 +325,7 @@ Uso da ferramenta `Selector Gadget` (extensão Google Chrome):
 
 # Web Scraping
 
-## Inspeção do HTML
+## Seleção dos elementos a extrair
 
 Forma genérica das nodes a extrair:
 
@@ -349,7 +351,7 @@ elem_list <- page %>%
 
 # Web Scraping
 
-## Inspeção do HTML
+## Seleção dos elementos a extrair
 
 .scroll-output[
 
@@ -364,12 +366,50 @@ raw_text
 
 # Web Scraping
 
+## Produção do código de extração:
+
+- Quebrar os elementos por cada aparição do símbolo `€`:
+
+```{r}
+{{pos <- grepl(x = raw_text,pattern = "€",fixed = T)}}
+```
+
+--
+
+- Obter o total de acomodações total:
+
+```{r}
+nrow(df)
+```
+`> 1000` `r emo::ji("warning")`
+
+---
+
+# Web Scrapping
+
+## obter o total de acomodações por nível de classificação
+
+```{r echo=F}
+df_total_accommodations <- readRDS("~/MSc in Data Science/DSMT/df_total_accommodations.rds")
+df_total_accommodations %>% knitr::kable()
+```
+
+---
+
+# Web Scraping
+
+  
+  - ciclos de extração por nível de classificação
+  - o mesmo processo para o tipo de propriedade (hotel vs. apartamento)
+  - fundir bases numa só (i.e. `df.rds`)
+
+
 ---
 
 # Data Preparation
 
 
-Total 1814 hospedagens (hotéis + propriedades), 16/04/2021-17/04/2021;
+Total `1814` propriedades (hotéis + apartamentos + outros tipos), 16/04/2021-17/04/2021;
 
 `summary(df)`
 

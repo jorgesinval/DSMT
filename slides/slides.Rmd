@@ -219,7 +219,27 @@ checkout_month <- 4
 checkout_year <- 2021
 ```
 
-Extração dos dados em tranches de 25 observações, sendo que se utilizou a ordem crecente de distância ao centro sendo que é um indicador que manterá a ordem das observações estável (ao contrário de outras variáveis dinâmicas como o preço).
+Extração dos dados em tranches de 25 observações, sendo que se utilizou a ordem crecente de distância ao centro (i.e. <kbd>order=distance_from_search</kbd>) sendo que é um indicador que manterá a ordem das observações mais estável (ao contrário de outras variáveis dinâmicas como o preço).
+
+---
+
+# Web Scraping
+
+Estratégia:
+
+- inspeção do URL
+
+- inspeção do HTML de uma página de resultados
+
+- seleção dos elementos a extrair
+
+- produção do código de extração:
+
+  - obter o total de acomodações total (`> 1000`)
+  - obter o total de acomodações por nível de classificação
+  - ciclos de extração por nível de classificação
+  - o mesmo processo para o tipo de propriedade (hotel vs. apartamento)
+  - fundir bases numa só (i.e. `df.rds`)
 
 ---
 
